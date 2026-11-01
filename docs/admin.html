@@ -170,6 +170,11 @@
   tr.void td:last-child, tr.void td:nth-last-child(2) { text-decoration: none; }
   .reason { color: var(--muted); font-size: 12px; white-space: normal; max-width: 220px; }
 
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px; }
+  .role-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; }
+  .role-card p { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+  body.viewer .admin-only, body.viewer .write-only { display: none !important; }
+
   /* ---------- מובייל ---------- */
   .menu-btn { display: none; }
   @media (max-width: 900px) {
@@ -212,6 +217,7 @@
       <button data-tab="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>רשומות נוכחות</button>
       <button data-tab="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>דוח שעות</button>
       <button data-tab="tags"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 0 1 0 7"/><path d="M9.5 6a10 10 0 0 1 0 12"/><path d="M13 3.5a14 14 0 0 1 0 17"/></svg>תגי NFC</button>
+      <button data-tab="managers" class="admin-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>מנהלים והרשאות</button>
     </nav>
     <div class="side-foot">
       <div class="user"><span class="av" id="userAv">מ</span><span id="userEmail"></span></div>
@@ -249,7 +255,7 @@
     <section id="drivers" class="hidden">
       <div class="page-head">
         <div><h1>ניהול נהגים</h1><p>הוספה, עריכה, איפוס טלפון והשבתה</p></div>
-        <button class="btn red big" onclick="openDriver()">+ הוספת נהג</button>
+        <button class="btn red big write-only" onclick="openDriver()">+ הוספת נהג</button>
       </div>
       <div class="chips" id="drvChips"></div>
       <div class="filters">
@@ -270,7 +276,7 @@
     <section id="records" class="hidden">
       <div class="page-head">
         <div><h1>רשומות נוכחות</h1><p>סינון, תיקון עם סיבה מחייבת ומסלול ביקורת</p></div>
-        <button class="btn red big" onclick="openManual()">+ רשומה ידנית</button>
+        <button class="btn red big write-only" onclick="openManual()">+ רשומה ידנית</button>
       </div>
       <div class="filters">
         <label>מתאריך</label><input type="date" id="recFrom">
@@ -315,6 +321,19 @@
       <div class="page-head"><div><h1>תגי NFC</h1><p>צורבים כל קישור על תג המשאית באפליקציית NFC Tools: Write ← Add a record ← URL</p></div></div>
       <div class="box" id="tagList"></div>
     </section>
+
+    <!-- מנהלים -->
+    <section id="managers" class="hidden">
+      <div class="page-head">
+        <div><h1>מנהלים והרשאות</h1><p>מי נכנס למערכת ומה מותר לו</p></div>
+        <button class="btn red big" onclick="openManager()">+ הוספת מנהל</button>
+      </div>
+      <div class="roles">
+        <div class="role-card"><span class="badge ok">מנהל מלא</span><p>רואה הכול, מוסיף ועורך נהגים, מתקן רשומות ומנהל מנהלים.</p></div>
+        <div class="role-card"><span class="badge dim">צפייה בלבד</span><p>רואה לוח בקרה, רשומות ודוחות, ומייצא לאקסל. לא יכול לשנות כלום.</p></div>
+      </div>
+      <div class="box"><div class="box-head"><h3>מנהלים במערכת</h3></div><div id="mgrTable"></div></div>
+    </section>
   </main>
 </div>
 
@@ -344,6 +363,25 @@
     <label>סיבה (חובה)</label><input id="manReason" placeholder="לדוגמה: הטלפון של הנהג לא עבד">
     <div class="err" id="manErr"></div>
     <div class="modal-foot"><button class="btn red" id="manSave">שמירה</button><button class="btn ghost" onclick="closeModal('manModal')">ביטול</button></div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="mgrModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mgrTitle">הוספת מנהל</h3><button class="x" onclick="closeModal('mgrModal')">✕</button></div>
+    <div id="mgrNew">
+      <label>שם</label><input id="mName" placeholder="לדוגמה: עלי">
+      <label>אימייל</label><input id="mEmail" type="email" placeholder="name@hmovil.co.il" autocomplete="off">
+    </div>
+    <div id="mgrRoleBox">
+      <label>הרשאה</label>
+      <div class="seg"><label><input type="radio" name="mRole" value="admin" checked> מנהל מלא</label><label><input type="radio" name="mRole" value="viewer"> צפייה בלבד</label></div>
+    </div>
+    <label id="mPassLabel">סיסמה ראשונית (לפחות 8 תווים)</label>
+    <div class="row"><input id="mPass" type="text" autocomplete="new-password" placeholder="••••••••"><button class="btn ghost" type="button" onclick="$('mPass').value = randomPassword()">סיסמה אקראית</button></div>
+    <p class="hint">את הסיסמה מעבירים למנהל באופן אישי. הוא יכול להשתמש בה מיד.</p>
+    <div class="err" id="mErr"></div>
+    <div class="modal-foot"><button class="btn red" id="mSave">שמירה</button><button class="btn ghost" onclick="closeModal('mgrModal')">ביטול</button></div>
   </div>
 </div>
 
@@ -388,6 +426,8 @@ async function start() {
   if (session) {
     $('userEmail').textContent = session.user.email;
     $('userAv').textContent = (session.user.email || 'מ')[0].toUpperCase();
+    const { data: role } = await sb.rpc('my_role');
+    document.body.classList.toggle('viewer', role !== 'admin');
     await loadDrivers(); loadNow();
   }
 }
@@ -403,9 +443,9 @@ $('logout').onclick = async () => { await sb.auth.signOut(); start(); };
 $('menuBtn').onclick = () => $('side').classList.toggle('open');
 document.querySelectorAll('aside nav [data-tab]').forEach(b => b.onclick = () => {
   document.querySelectorAll('aside nav [data-tab]').forEach(x => x.classList.toggle('active', x === b));
-  ['now', 'records', 'report', 'drivers', 'tags'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
+  ['now', 'records', 'report', 'drivers', 'tags', 'managers'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
   $('side').classList.remove('open');
-  ({ now: loadNow, records: loadRecords, report: runReport, drivers: renderDrivers, tags: renderTags })[b.dataset.tab]();
+  ({ now: loadNow, records: loadRecords, report: runReport, drivers: renderDrivers, tags: renderTags, managers: loadManagers })[b.dataset.tab]();
 });
 
 // ---------- נהגים ----------
@@ -440,7 +480,7 @@ function renderDrivers() {
       <td class="num">${d.id}</td><td>${nameCell(d.name)}</td><td class="mono">${esc(d.id_number)}</td><td class="mono">${esc(d.pin)}</td>
       <td>${d.device_token ? '<span class="badge ok"><span class="dot"></span>רשום</span>' : '<span class="badge warn">טרם נרשם</span>'}</td>
       <td>${d.active ? '<span class="badge ok">פעיל</span>' : '<span class="badge bad">מושבת</span>'}</td>
-      <td><div class="actions">
+      <td><div class="actions write-only">
         <button class="icon-btn" title="עריכה" onclick="openDriver(${d.id})">${ICON_EDIT}</button>
         <button class="icon-btn" title="אפס טלפון" onclick="resetDevice(${d.id})">${ICON_PHONE}</button>
         <button class="icon-btn ${d.active ? 'danger' : 'go'}" title="${d.active ? 'השבת' : 'הפעל'}" onclick="toggleActive(${d.id}, ${!d.active})">${ICON_OFF}</button>
@@ -644,7 +684,7 @@ async function loadRecords() {
       return `<tr class="${v ? 'void' : ''}"><td>${nameCell(dname(p.driver_id))}</td><td>${kindBadge(p.kind)}</td>
         <td>${p.truck_id ? `<span class="badge dim">${p.truck_id}</span>` : '—'}</td><td>${fmtTime(p.at)}</td>
         <td>${p.manual ? 'ידני' : 'NFC'}</td><td>${mapLink(p)}</td><td>${status}</td>
-        <td style="text-align:left">${v ? '' : `<button class="btn ghost small" onclick="openFix(${p.id})">תיקון</button>`}</td></tr>`;
+        <td style="text-align:left">${v ? '' : `<button class="btn ghost small write-only" onclick="openFix(${p.id})">תיקון</button>`}</td></tr>`;
     }), 'אין רשומות בטווח שנבחר');
   loadAudit();
 }
@@ -711,6 +751,71 @@ $('manSave').onclick = async () => {
   closeModal('manModal');
   if (!$('records').classList.contains('hidden')) loadRecords();
 };
+
+// ---------- מנהלים ----------
+let managers = [], editingMgr = null;
+const roleBadge = r => r === 'admin' ? '<span class="badge ok">מנהל מלא</span>' : '<span class="badge dim">צפייה בלבד</span>';
+const randomPassword = () => {
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const a = new Uint32Array(10); crypto.getRandomValues(a);
+  return Array.from(a, n => chars[n % chars.length]).join('');
+};
+
+async function loadManagers() {
+  const { data, error } = await sb.rpc('list_managers');
+  if (error) return $('mgrTable').innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+  managers = data || [];
+  const me = (await sb.auth.getUser()).data.user?.id;
+  $('mgrTable').innerHTML = table(['מנהל', 'אימייל', 'הרשאה', 'סטטוס', 'כניסה אחרונה', 'פעולות'],
+    managers.map(m => `<tr class="${m.active ? '' : 'off'}">
+      <td>${nameCell(m.name || m.email)}${m.user_id === me ? ' <span class="badge dim">את/ה</span>' : ''}</td>
+      <td class="mono">${esc(m.email)}</td><td>${roleBadge(m.role)}</td>
+      <td>${m.active ? '<span class="badge ok">פעיל</span>' : '<span class="badge bad">מושבת</span>'}</td>
+      <td>${m.last_sign_in_at ? fmtTime(m.last_sign_in_at) : '<span style="color:var(--muted)">עוד לא נכנס</span>'}</td>
+      <td><div class="actions">
+        <button class="icon-btn" title="שינוי הרשאה וסיסמה" onclick="openManager('${m.user_id}')">${ICON_EDIT}</button>
+        ${m.user_id === me ? '' : `<button class="icon-btn ${m.active ? 'danger' : 'go'}" title="${m.active ? 'השבת' : 'הפעל'}" onclick="toggleManager('${m.user_id}')">${ICON_OFF}</button>`}
+      </div></td></tr>`), 'אין מנהלים');
+}
+
+function openManager(uid) {
+  editingMgr = managers.find(m => m.user_id === uid) || null;
+  $('mgrTitle').textContent = editingMgr ? `עריכת ${editingMgr.name || editingMgr.email}` : 'הוספת מנהל';
+  $('mgrNew').classList.toggle('hidden', !!editingMgr);
+  $('mName').value = ''; $('mEmail').value = '';
+  $('mPass').value = editingMgr ? '' : randomPassword();
+  $('mPassLabel').textContent = editingMgr ? 'סיסמה חדשה (להשאיר ריק כדי לא לשנות)' : 'סיסמה ראשונית (לפחות 8 תווים)';
+  document.querySelector(`input[name=mRole][value=${editingMgr?.role || 'admin'}]`).checked = true;
+  $('mErr').textContent = '';
+  $('mgrModal').classList.remove('hidden');
+}
+$('mgrModal').onclick = e => { if (e.target.id === 'mgrModal') closeModal('mgrModal'); };
+
+$('mSave').onclick = async () => {
+  const role = document.querySelector('input[name=mRole]:checked').value;
+  const pass = $('mPass').value.trim();
+  if (pass && pass.length < 8) return $('mErr').textContent = 'הסיסמה צריכה לפחות 8 תווים';
+  let error;
+  if (editingMgr) {
+    ({ error } = await sb.rpc('update_manager', { p_user_id: editingMgr.user_id, p_role: role, p_active: editingMgr.active }));
+    if (!error && pass) ({ error } = await sb.rpc('set_manager_password', { p_user_id: editingMgr.user_id, p_password: pass }));
+  } else {
+    if (!$('mEmail').value.trim()) return $('mErr').textContent = 'חסר אימייל';
+    if (!pass) return $('mErr').textContent = 'חסרה סיסמה';
+    ({ error } = await sb.rpc('create_manager', { p_email: $('mEmail').value, p_password: pass, p_name: $('mName').value, p_role: role }));
+  }
+  if (error) return $('mErr').textContent = error.message;
+  closeModal('mgrModal');
+  loadManagers();
+};
+
+async function toggleManager(uid) {
+  const m = managers.find(x => x.user_id === uid);
+  if (m.active && !confirm(`להשבית את ${m.name || m.email}? הוא לא יוכל לראות נתונים.`)) return;
+  const { error } = await sb.rpc('update_manager', { p_user_id: uid, p_role: m.role, p_active: !m.active });
+  if (error) return alert(error.message);
+  loadManagers();
+}
 
 start();
 </script>
