@@ -3,77 +3,197 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ניהול נוכחות</title>
+<title>ניהול נוכחות · המוביל החדש</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f3f4f6; color: #111; }
-  header { background: #1e3a8a; color: #fff; padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  header b { margin-left: auto; }
-  header button { background: #fff2; color: #fff; border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-  header button.active { background: #fff; color: #1e3a8a; }
-  main { max-width: 1100px; margin: 16px auto; padding: 0 16px; }
-  .box { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 6px #0001; overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; }
-  th { background: #f9fafb; }
-  input, select { padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
-  button.act { padding: 8px 14px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
-  button.small { padding: 4px 8px; font-size: 13px; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-  .in { color: #16a34a; } .out { color: #dc2626; }
-  .hidden { display: none; }
-  #login { max-width: 360px; margin: 60px auto; }
-  #login input { width: 100%; box-sizing: border-box; margin: 6px 0; }
+  :root {
+    --navy: #0b1530; --navy-2: #13235a; --blue: #1f3fa8; --red: #e3262d; --gold: #c9a45a;
+    --bg: #f4f5f9; --card: #fff; --text: #141a2e; --muted: #7a8299; --line: #e8eaf1;
+    --green: #16a34a; --green-bg: #e8f7ee; --red-bg: #fdecec;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Heebo', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+  .hidden { display: none !important; }
+
+  /* כניסה */
+  #login {
+    min-height: 100vh; display: grid; place-items: center; padding: 16px;
+    background:
+      radial-gradient(1000px 500px at 100% 0, rgba(227,38,45,.25), transparent 60%),
+      radial-gradient(800px 500px at 0 100%, rgba(31,63,168,.5), transparent 60%),
+      linear-gradient(160deg, var(--navy), var(--navy-2));
+  }
+  .login-card {
+    width: 100%; max-width: 400px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(18px); border-radius: 28px; padding: 34px 28px; color: #fff; text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,.4);
+  }
+  .login-card .logo { background: #fff; border-radius: 16px; padding: 10px 16px; display: inline-block; margin-bottom: 18px; }
+  .login-card .logo img { height: 56px; display: block; }
+  .login-card h2 { margin: 0 0 4px; font-weight: 800; }
+  .login-card p { margin: 0 0 22px; color: #9aa6c4; font-weight: 300; }
+  .login-card input { width: 100%; margin: 6px 0; padding: 14px 16px; border-radius: 14px; font: 500 16px 'Heebo';
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); color: #fff; outline: none; }
+  .login-card input:focus { border-color: var(--gold); }
+  .login-card input::placeholder { color: #7381a8; }
+  .btn-red { width: 100%; margin-top: 14px; padding: 14px; border: 0; border-radius: 14px; cursor: pointer;
+    font: 700 17px 'Heebo'; color: #fff; background: linear-gradient(135deg, var(--red), #b3141b); box-shadow: 0 12px 26px rgba(227,38,45,.4); }
+  .login-err { color: #ff8a8f; min-height: 1.2em; margin-top: 12px; }
+
+  /* מבנה */
+  header {
+    background: linear-gradient(120deg, var(--navy), var(--navy-2)); color: #fff;
+    position: sticky; top: 0; z-index: 10; box-shadow: 0 6px 24px rgba(11,21,48,.25);
+  }
+  .bar { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .bar .logo { background: #fff; border-radius: 12px; padding: 5px 10px; }
+  .bar .logo img { height: 34px; display: block; }
+  .bar .title { font-weight: 700; font-size: 17px; }
+  .bar .title small { display: block; font-weight: 300; font-size: 12px; color: #9aa6c4; }
+  nav { display: flex; gap: 4px; background: rgba(255,255,255,.07); padding: 4px; border-radius: 14px; margin-inline-start: auto; flex-wrap: wrap; }
+  nav button { background: none; border: 0; color: #c7cfe6; font: 500 14px 'Heebo'; padding: 9px 16px; border-radius: 10px; cursor: pointer; transition: .2s; }
+  nav button:hover { color: #fff; }
+  nav button.active { background: #fff; color: var(--navy); font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .logout { background: none; border: 1px solid rgba(255,255,255,.2); color: #c7cfe6; font: 500 13px 'Heebo'; padding: 8px 14px; border-radius: 10px; cursor: pointer; }
+  .accent { height: 3px; background: linear-gradient(90deg, var(--red), var(--gold), var(--blue)); }
+
+  main { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+  .page-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .page-head h1 { margin: 0; font-size: 26px; font-weight: 800; }
+  .page-head p { margin: 2px 0 0; color: var(--muted); font-weight: 300; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .kpi { background: var(--card); border-radius: 20px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(20,26,46,.05); border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .kpi::after { content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--blue)); }
+  .kpi .label { color: var(--muted); font-size: 14px; }
+  .kpi .value { font-size: 38px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+  .kpi .sub { color: var(--muted); font-size: 13px; }
+
+  .box { background: var(--card); border-radius: 20px; padding: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(20,26,46,.05); border: 1px solid var(--line); overflow-x: auto; }
+  .box-head { padding: 16px 18px 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .box-head h3 { margin: 0; font-size: 17px; font-weight: 700; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th { text-align: right; font-weight: 500; color: var(--muted); font-size: 13px; padding: 10px 18px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 13px 18px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #fafbfd; }
+  .empty { text-align: center; color: var(--muted); padding: 40px; }
+
+  .name { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; background: linear-gradient(135deg, var(--blue), var(--navy-2)); flex: none; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 13px; font-weight: 500; }
+  .badge.ok { background: var(--green-bg); color: var(--green); }
+  .badge.bad { background: var(--red-bg); color: var(--red); }
+  .badge.dim { background: #eef0f5; color: var(--muted); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .live .dot { animation: blink 1.6s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+  a.map { color: var(--blue); text-decoration: none; font-weight: 500; }
+
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin-bottom: 20px; }
+  .filters label { color: var(--muted); font-size: 14px; }
+  input, select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font: 400 15px 'Heebo'; background: #fafbfd; color: var(--text); outline: none; }
+  input:focus, select:focus { border-color: var(--blue); background: #fff; }
+  .btn { padding: 10px 18px; border: 0; border-radius: 12px; cursor: pointer; font: 600 14px 'Heebo'; color: #fff; background: var(--navy); transition: .15s; }
+  .btn:hover { filter: brightness(1.2); }
+  .btn.red { background: linear-gradient(135deg, var(--red), #b3141b); }
+  .btn.ghost { background: #fff; color: var(--navy); border: 1px solid var(--line); }
+  .btn.small { padding: 6px 12px; font-size: 13px; }
+  .search { min-width: 220px; }
+  .mono { font-family: ui-monospace, Consolas, monospace; direction: ltr; unicode-bidi: plaintext; color: #3b4566; font-size: 13px; }
+  .copy-done { color: var(--green) !important; }
 </style>
 </head>
 <body>
 
-<div id="login" class="box hidden">
-  <h2>כניסת מנהל</h2>
-  <input id="email" type="email" placeholder="אימייל">
-  <input id="password" type="password" placeholder="סיסמה">
-  <button class="act" id="loginBtn">כניסה</button>
-  <p id="loginErr" class="out"></p>
+<div id="login" class="hidden">
+  <div class="login-card">
+    <div class="logo"><img src="logo.jpg" alt="קבוצת המוביל החדש"></div>
+    <h2>מערכת נוכחות</h2>
+    <p>כניסת מנהלים</p>
+    <input id="email" type="email" placeholder="אימייל" autocomplete="username">
+    <input id="password" type="password" placeholder="סיסמה" autocomplete="current-password">
+    <button class="btn-red" id="loginBtn">כניסה</button>
+    <div id="loginErr" class="login-err"></div>
+  </div>
 </div>
 
 <div id="app" class="hidden">
   <header>
-    <b>מערכת נוכחות נהגים</b>
-    <button data-tab="now" class="active">במשמרת עכשיו</button>
-    <button data-tab="report">דוח שעות</button>
-    <button data-tab="drivers">נהגים</button>
-    <button data-tab="tags">קישורים לתגים</button>
-    <button id="logout">יציאה</button>
+    <div class="bar">
+      <div class="logo"><img src="logo.jpg" alt="קבוצת המוביל החדש"></div>
+      <div class="title">מערכת נוכחות<small>קבוצת המוביל החדש</small></div>
+      <nav>
+        <button data-tab="now" class="active">במשמרת עכשיו</button>
+        <button data-tab="report">דוח שעות</button>
+        <button data-tab="drivers">נהגים</button>
+        <button data-tab="tags">קישורים לתגים</button>
+      </nav>
+      <button class="logout" id="logout">יציאה</button>
+    </div>
+    <div class="accent"></div>
   </header>
+
   <main>
-    <section id="now" class="box"></section>
+    <!-- במשמרת עכשיו -->
+    <section id="now">
+      <div class="page-head">
+        <div><h1>לוח בקרה</h1><p id="nowDate"></p></div>
+        <button class="btn ghost" onclick="loadNow()">רענון</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi" style="--c: var(--green)"><div class="label">במשמרת עכשיו</div><div class="value" id="kOn">–</div><div class="sub">נהגים פעילים בשטח</div></div>
+        <div class="kpi" style="--c: var(--blue)"><div class="label">החתימו היום</div><div class="value" id="kToday">–</div><div class="sub" id="kTodaySub"></div></div>
+        <div class="kpi" style="--c: var(--gold)"><div class="label">שעות היום</div><div class="value" id="kHours">–</div><div class="sub">משמרות שהסתיימו</div></div>
+        <div class="kpi" style="--c: var(--red)"><div class="label">נהגים רשומים</div><div class="value" id="kReg">–</div><div class="sub" id="kRegSub"></div></div>
+      </div>
+      <div class="box">
+        <div class="box-head"><h3>נהגים במשמרת</h3><span class="badge ok live"><span class="dot"></span>עדכני</span></div>
+        <div id="nowTable"></div>
+      </div>
+    </section>
 
-    <section id="report" class="box hidden">
-      <div class="row">
-        מתאריך <input type="date" id="from"> עד <input type="date" id="to">
+    <!-- דוח -->
+    <section id="report" class="hidden">
+      <div class="page-head"><div><h1>דוח שעות</h1><p>סיכום משמרות לפי תקופה</p></div></div>
+      <div class="filters">
+        <label>מתאריך</label><input type="date" id="from">
+        <label>עד</label><input type="date" id="to">
         <select id="repDriver"><option value="">כל הנהגים</option></select>
-        <button class="act" id="runReport">הצג</button>
-        <button class="act" id="csvSummary">ייצוא סיכום</button>
-        <button class="act" id="csvDetail">ייצוא מפורט</button>
+        <button class="btn" id="runReport">הצג</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="csvSummary">ייצוא סיכום</button>
+        <button class="btn ghost" id="csvDetail">ייצוא מפורט</button>
       </div>
-      <h3>סיכום שעות</h3>
-      <div id="summary"></div>
-      <h3>משמרות</h3>
-      <div id="shifts"></div>
+      <div class="kpis">
+        <div class="kpi" style="--c: var(--blue)"><div class="label">סה״כ שעות</div><div class="value" id="rHours">–</div></div>
+        <div class="kpi" style="--c: var(--green)"><div class="label">משמרות</div><div class="value" id="rShifts">–</div></div>
+        <div class="kpi" style="--c: var(--gold)"><div class="label">נהגים שעבדו</div><div class="value" id="rDrivers">–</div></div>
+        <div class="kpi" style="--c: var(--red)"><div class="label">משמרות חסרות</div><div class="value" id="rBroken">–</div><div class="sub">כניסה או יציאה חסרה</div></div>
+      </div>
+      <div class="box"><div class="box-head"><h3>סיכום לפי נהג</h3></div><div id="summary"></div></div>
+      <div class="box"><div class="box-head"><h3>פירוט משמרות</h3></div><div id="shifts"></div></div>
     </section>
 
-    <section id="drivers" class="box hidden">
-      <div class="row">
-        <input id="dName" placeholder="שם">
-        <input id="dIdNum" placeholder="תעודת זהות">
-        <input id="dPin" placeholder="קוד אישי (4 ספרות)">
-        <button class="act" id="addDriver">הוסף נהג</button>
+    <!-- נהגים -->
+    <section id="drivers" class="hidden">
+      <div class="page-head"><div><h1>נהגים</h1><p id="drvCount"></p></div></div>
+      <div class="filters">
+        <input id="dName" placeholder="שם מלא">
+        <input id="dIdNum" placeholder="תעודת זהות" inputmode="numeric">
+        <input id="dPin" placeholder="קוד אישי (4 ספרות)" inputmode="numeric">
+        <button class="btn red" id="addDriver">+ הוסף נהג</button>
+        <span style="flex:1"></span>
+        <input id="drvSearch" class="search" placeholder="חיפוש נהג…">
       </div>
-      <div id="driverList"></div>
+      <div class="box" id="driverList"></div>
     </section>
 
-    <section id="tags" class="box hidden">
-      <p>צרוב כל קישור על התג של המשאית (באפליקציה כמו NFC Tools: Write → Add a record → URL).</p>
-      <div id="tagList"></div>
+    <!-- תגים -->
+    <section id="tags" class="hidden">
+      <div class="page-head"><div><h1>קישורים לתגים</h1><p>צורבים כל קישור על תג המשאית באפליקציית NFC Tools: Write ← Add a record ← URL</p></div></div>
+      <div class="box" id="tagList"></div>
     </section>
   </main>
 </div>
@@ -85,9 +205,17 @@ const sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_AN
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtTime = t => t ? new Date(t).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+const fmtClock = t => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 const fmtHours = ms => { const m = Math.round(ms / 60000); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 const ymd = d => d.toLocaleDateString('en-CA');
+const initials = n => String(n).trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('');
+const nameCell = n => `<div class="name"><span class="avatar">${esc(initials(n))}</span>${esc(n)}</div>`;
+const table = (head, rows, empty) => rows.length
+  ? `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`
+  : `<div class="empty">${empty}</div>`;
+const mapLink = p => p && p.lat ? `<a class="map" target="_blank" href="https://maps.google.com/?q=${p.lat},${p.lng}">מפה ↗</a>` : '<span style="color:var(--muted)">—</span>';
 let drivers = [], lastShifts = [];
+const dname = id => drivers.find(d => d.id === id)?.name ?? id;
 
 // ---------- התחברות ----------
 async function start() {
@@ -101,11 +229,12 @@ $('loginBtn').onclick = async () => {
   $('loginErr').textContent = error ? 'פרטים שגויים' : '';
   if (!error) start();
 };
+$('password').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
 $('logout').onclick = async () => { await sb.auth.signOut(); start(); };
 
 // ---------- לשוניות ----------
-document.querySelectorAll('header [data-tab]').forEach(b => b.onclick = () => {
-  document.querySelectorAll('header [data-tab]').forEach(x => x.classList.toggle('active', x === b));
+document.querySelectorAll('nav [data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav [data-tab]').forEach(x => x.classList.toggle('active', x === b));
   ['now', 'report', 'drivers', 'tags'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
   ({ now: loadNow, report: runReport, drivers: renderDrivers, tags: renderTags })[b.dataset.tab]();
 });
@@ -118,15 +247,21 @@ async function loadDrivers() {
     drivers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
 }
 function renderDrivers() {
-  $('driverList').innerHTML = `<table><tr><th>שם</th><th>ת.ז</th><th>קוד</th><th>טלפון רשום</th><th>פעיל</th><th></th></tr>` +
-    drivers.map(d => `<tr>
-      <td>${esc(d.name)}</td><td>${esc(d.id_number)}</td><td>${esc(d.pin)}</td>
-      <td>${d.device_token ? '✅' : '—'}</td><td>${d.active ? '✅' : '❌'}</td>
-      <td>
-        <button class="act small" onclick="resetDevice(${d.id})">אפס טלפון</button>
-        <button class="act small" onclick="toggleActive(${d.id}, ${!d.active})">${d.active ? 'השבת' : 'הפעל'}</button>
-      </td></tr>`).join('') + '</table>';
+  const q = $('drvSearch').value.trim();
+  const list = drivers.filter(d => !q || d.name.includes(q) || d.id_number.includes(q));
+  const reg = drivers.filter(d => d.device_token).length;
+  $('drvCount').textContent = `${drivers.filter(d => d.active).length} פעילים · ${reg} רשמו טלפון`;
+  $('driverList').innerHTML = table(['נהג', 'ת.ז', 'קוד', 'טלפון', 'סטטוס', ''],
+    list.map(d => `<tr>
+      <td>${nameCell(d.name)}</td><td class="mono">${esc(d.id_number)}</td><td class="mono">${esc(d.pin)}</td>
+      <td>${d.device_token ? '<span class="badge ok"><span class="dot"></span>רשום</span>' : '<span class="badge dim">טרם נרשם</span>'}</td>
+      <td>${d.active ? '<span class="badge ok">פעיל</span>' : '<span class="badge bad">מושבת</span>'}</td>
+      <td style="text-align:left">
+        <button class="btn ghost small" onclick="resetDevice(${d.id})">אפס טלפון</button>
+        <button class="btn ghost small" onclick="toggleActive(${d.id}, ${!d.active})">${d.active ? 'השבת' : 'הפעל'}</button>
+      </td></tr>`), 'לא נמצאו נהגים');
 }
+$('drvSearch').oninput = renderDrivers;
 $('addDriver').onclick = async () => {
   const id_number = $('dIdNum').value.replace(/\D/g, '').padStart(9, '0');
   const { error } = await sb.from('drivers').insert({ name: $('dName').value.trim(), id_number, pin: $('dPin').value.trim() });
@@ -144,20 +279,38 @@ async function toggleActive(id, active) {
   await loadDrivers(); renderDrivers();
 }
 
-// ---------- במשמרת עכשיו ----------
+// ---------- לוח בקרה ----------
 async function loadNow() {
+  $('nowDate').textContent = new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const since = new Date(Date.now() - 16 * 3600e3).toISOString();
-  const { data } = await sb.from('punches').select('*').gte('at', since).order('at', { ascending: false });
+  const { data } = await sb.from('punches').select('*').gte('at', since).order('at');
+  const punches = data || [];
   const last = {};
-  (data || []).forEach(p => { if (!last[p.driver_id]) last[p.driver_id] = p; });
-  const on = Object.values(last).filter(p => p.kind === 'in');
-  const name = id => drivers.find(d => d.id === id)?.name ?? id;
-  $('now').innerHTML = `<h3>במשמרת עכשיו: ${on.length} מתוך ${drivers.filter(d => d.active).length}</h3>` +
-    `<table><tr><th>נהג</th><th>משאית</th><th>נכנס</th><th>משך</th><th>מיקום</th></tr>` +
-    on.map(p => `<tr><td>${esc(name(p.driver_id))}</td><td>${p.truck_id ?? '—'}</td><td>${fmtTime(p.at)}</td>
-      <td>${fmtHours(Date.now() - new Date(p.at))}</td><td>${mapLink(p)}</td></tr>`).join('') + '</table>';
+  punches.forEach(p => last[p.driver_id] = p);
+  const on = Object.values(last).filter(p => p.kind === 'in').sort((a, b) => new Date(a.at) - new Date(b.at));
+
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const today = punches.filter(p => new Date(p.at) >= midnight);
+  const open = {}; let ms = 0;
+  punches.forEach(p => {
+    if (p.kind === 'in') open[p.driver_id] = p;
+    else if (open[p.driver_id]) { if (new Date(p.at) >= midnight) ms += new Date(p.at) - new Date(open[p.driver_id].at); delete open[p.driver_id]; }
+  });
+  const active = drivers.filter(d => d.active).length;
+  const reg = drivers.filter(d => d.device_token).length;
+  $('kOn').textContent = on.length;
+  $('kToday').textContent = new Set(today.map(p => p.driver_id)).size;
+  $('kTodaySub').textContent = `מתוך ${active} נהגים פעילים`;
+  $('kHours').textContent = fmtHours(ms);
+  $('kReg').textContent = reg;
+  $('kRegSub').textContent = `מתוך ${active} · ${active - reg} טרם נרשמו`;
+
+  $('nowTable').innerHTML = table(['נהג', 'משאית', 'שעת כניסה', 'משך משמרת', 'מיקום'],
+    on.map(p => `<tr><td>${nameCell(dname(p.driver_id))}</td><td>${p.truck_id ? `<span class="badge dim">משאית ${p.truck_id}</span>` : '—'}</td>
+      <td>${fmtClock(p.at)}</td><td><b>${fmtHours(Date.now() - new Date(p.at))}</b></td><td>${mapLink(p)}</td></tr>`),
+    'אין כרגע נהגים במשמרת');
 }
-const mapLink = p => p.lat ? `<a target="_blank" href="https://maps.google.com/?q=${p.lat},${p.lng}">מפה</a>` : '—';
+setInterval(() => { if (!$('now').classList.contains('hidden') && !$('app').classList.contains('hidden')) loadNow(); }, 60000);
 
 // ---------- דוח ----------
 const today = new Date();
@@ -188,18 +341,24 @@ async function runReport() {
   shifts.sort((a, b) => new Date((b.in || b.out).at) - new Date((a.in || a.out).at));
   lastShifts = shifts;
 
-  const name = id => drivers.find(d => d.id === id)?.name ?? id;
   const sum = {};
   shifts.forEach(s => { sum[s.driver] ??= { ms: 0, n: 0, broken: 0 }; sum[s.driver].ms += s.ms; sum[s.driver].n++; if (!s.ms) sum[s.driver].broken++; });
+  $('rHours').textContent = fmtHours(shifts.reduce((a, s) => a + s.ms, 0));
+  $('rShifts').textContent = shifts.length;
+  $('rDrivers').textContent = Object.keys(sum).length;
+  $('rBroken').textContent = shifts.filter(s => !s.ms).length;
 
-  $('summary').innerHTML = `<table><tr><th>נהג</th><th>משמרות</th><th>סה"כ שעות</th><th>משמרות חסרות</th></tr>` +
+  $('summary').innerHTML = table(['נהג', 'משמרות', 'סה״כ שעות', 'משמרות חסרות'],
     Object.entries(sum).sort((a, b) => b[1].ms - a[1].ms).map(([d, s]) =>
-      `<tr><td>${esc(name(+d))}</td><td>${s.n}</td><td>${fmtHours(s.ms)}</td><td class="${s.broken ? 'out' : ''}">${s.broken}</td></tr>`).join('') + '</table>';
-  $('shifts').innerHTML = `<table><tr><th>נהג</th><th>משאית</th><th>כניסה</th><th>יציאה</th><th>שעות</th><th>מיקום</th></tr>` +
-    shifts.map(s => `<tr><td>${esc(name(s.driver))}</td><td>${(s.in || s.out).truck_id ?? '—'}</td>
-      <td>${s.in ? fmtTime(s.in.at) : '<span class="out">חסר</span>'}</td>
-      <td>${s.out ? fmtTime(s.out.at) : '<span class="out">חסר</span>'}</td>
-      <td>${s.ms ? fmtHours(s.ms) : '—'}</td><td>${mapLink(s.in || s.out)}</td></tr>`).join('') + '</table>';
+      `<tr><td>${nameCell(dname(+d))}</td><td>${s.n}</td><td><b>${fmtHours(s.ms)}</b></td>
+       <td>${s.broken ? `<span class="badge bad">${s.broken}</span>` : '<span class="badge ok">0</span>'}</td></tr>`),
+    'אין משמרות בתקופה שנבחרה');
+  $('shifts').innerHTML = table(['נהג', 'משאית', 'כניסה', 'יציאה', 'שעות', 'מיקום'],
+    shifts.map(s => `<tr><td>${nameCell(dname(s.driver))}</td><td>${(s.in || s.out).truck_id ?? '—'}</td>
+      <td>${s.in ? fmtTime(s.in.at) : '<span class="badge bad">חסר</span>'}</td>
+      <td>${s.out ? fmtTime(s.out.at) : '<span class="badge bad">חסר</span>'}</td>
+      <td><b>${s.ms ? fmtHours(s.ms) : '—'}</b></td><td>${mapLink(s.in || s.out)}</td></tr>`),
+    'אין משמרות בתקופה שנבחרה');
 }
 $('runReport').onclick = runReport;
 
@@ -209,7 +368,6 @@ function downloadCsv(name, rows) {
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = name; a.click();
 }
-const dname = id => drivers.find(d => d.id === id)?.name ?? id;
 $('csvDetail').onclick = () => downloadCsv(`משמרות_${$('from').value}_${$('to').value}.csv`,
   [['נהג', 'משאית', 'כניסה', 'יציאה', 'שעות']].concat(lastShifts.map(s =>
     [dname(s.driver), (s.in || s.out).truck_id, s.in && fmtTime(s.in.at), s.out && fmtTime(s.out.at), s.ms ? (s.ms / 3600e3).toFixed(2) : ''])));
@@ -224,8 +382,14 @@ $('csvSummary').onclick = () => {
 async function renderTags() {
   const { data } = await sb.from('trucks').select('*').order('id');
   const base = location.href.replace(/admin\.html.*$/, '');
-  $('tagList').innerHTML = `<table><tr><th>תג</th><th>משאית</th><th>קישור לצריבה</th></tr>` +
-    (data || []).map(t => `<tr><td>${t.id}</td><td>${esc(t.name)}</td><td dir="ltr">${base}?truck=${t.id}</td></tr>`).join('') + '</table>';
+  $('tagList').innerHTML = table(['תג', 'משאית', 'קישור לצריבה', ''],
+    (data || []).map(t => `<tr><td><span class="badge dim">#${t.id}</span></td><td>${esc(t.name)}</td>
+      <td class="mono">${base}?truck=${t.id}</td>
+      <td style="text-align:left"><button class="btn ghost small" onclick="copyLink(this, '${base}?truck=${t.id}')">העתק</button></td></tr>`),
+    'אין משאיות');
+}
+async function copyLink(btn, url) {
+  try { await navigator.clipboard.writeText(url); btn.textContent = 'הועתק ✓'; btn.classList.add('copy-done'); } catch { prompt('העתק:', url); }
 }
 
 start();
