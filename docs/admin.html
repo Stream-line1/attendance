@@ -128,6 +128,36 @@
   .mono { font-family: ui-monospace, Consolas, monospace; direction: ltr; unicode-bidi: plaintext; color: #3b4566; font-size: 13px; }
   .copy-done { color: var(--green) !important; }
 
+  .btn.big { padding: 13px 22px; font-size: 16px; border-radius: 14px; box-shadow: 0 10px 24px rgba(227,38,45,.3); }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 8px 16px; font-size: 14px; color: var(--muted); cursor: pointer; transition: .15s; }
+  .chip b { color: var(--text); margin-inline-start: 6px; }
+  .chip.on { background: var(--navy); border-color: var(--navy); color: #c7cfe6; }
+  .chip.on b { color: #fff; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-wrap svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
+  .search-wrap input { width: 100%; padding-right: 38px; }
+  .num { color: var(--muted); font-size: 13px; }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .icon-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; display: grid; place-items: center; color: var(--navy); transition: .15s; }
+  .icon-btn:hover { background: #f3f5fa; }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .icon-btn.danger { color: var(--red); }
+  .icon-btn.go { color: var(--green); }
+  tr.off td { opacity: .55; }
+  .modal-bg { position: fixed; inset: 0; z-index: 50; background: rgba(11,21,48,.55); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 16px; }
+  .modal { width: 100%; max-width: 440px; background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 30px 60px rgba(0,0,0,.3); animation: pop .2s ease; }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .modal-head h3 { margin: 0; font-size: 22px; font-weight: 800; }
+  .modal .x { border: 0; background: #f3f5fa; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 15px; }
+  .modal label { display: block; font-size: 14px; color: var(--muted); margin: 14px 2px 6px; }
+  .modal input { width: 100%; padding: 12px 14px; font-size: 16px; }
+  .modal .row { display: flex; gap: 8px; }
+  .modal .row input { flex: 1; }
+  .modal .err { color: var(--red); min-height: 1.2em; margin-top: 10px; font-size: 14px; }
+  .modal-foot { display: flex; gap: 8px; margin-top: 8px; }
+
   /* ---------- מובייל ---------- */
   .menu-btn { display: none; }
   @media (max-width: 900px) {
@@ -204,14 +234,21 @@
 
     <!-- נהגים -->
     <section id="drivers" class="hidden">
-      <div class="page-head"><div><h1>נהגים</h1><p id="drvCount"></p></div></div>
+      <div class="page-head">
+        <div><h1>ניהול נהגים</h1><p>הוספה, עריכה, איפוס טלפון והשבתה</p></div>
+        <button class="btn red big" onclick="openDriver()">+ הוספת נהג</button>
+      </div>
+      <div class="chips" id="drvChips"></div>
       <div class="filters">
-        <input id="dName" placeholder="שם מלא">
-        <input id="dIdNum" placeholder="תעודת זהות" inputmode="numeric">
-        <input id="dPin" placeholder="קוד אישי (4 ספרות)" inputmode="numeric">
-        <button class="btn red" id="addDriver">+ הוסף נהג</button>
-        <span style="flex:1"></span>
-        <input id="drvSearch" class="search" placeholder="חיפוש לפי שם או ת.ז…">
+        <div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="drvSearch" placeholder="חיפוש לפי שם או ת.ז…"></div>
+        <select id="drvStatus">
+          <option value="">כל הסטטוסים</option>
+          <option value="active">פעילים</option>
+          <option value="inactive">מושבתים</option>
+          <option value="registered">רשמו טלפון</option>
+          <option value="unregistered">טרם נרשמו</option>
+        </select>
       </div>
       <div class="box" id="driverList"></div>
     </section>
@@ -244,6 +281,18 @@
       <div class="box" id="tagList"></div>
     </section>
   </main>
+</div>
+
+<div class="modal-bg hidden" id="drvModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="drvModalTitle">הוספת נהג</h3><button class="x" onclick="closeDriver()">✕</button></div>
+    <label>שם מלא</label><input id="dName" placeholder="לדוגמה: אחמד נאסר">
+    <label>תעודת זהות</label><input id="dIdNum" inputmode="numeric" placeholder="9 ספרות">
+    <label>קוד אישי</label>
+    <div class="row"><input id="dPin" inputmode="numeric" placeholder="4 ספרות" maxlength="4"><button class="btn ghost" type="button" onclick="$('dPin').value = randomPin()">קוד אקראי</button></div>
+    <div class="err" id="drvErr"></div>
+    <div class="modal-foot"><button class="btn red" id="saveDriver">שמירה</button><button class="btn ghost" onclick="closeDriver()">ביטול</button></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -302,27 +351,66 @@ async function loadDrivers() {
   $('repDriver').innerHTML = '<option value="">כל הנהגים</option>' +
     drivers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
 }
+const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M3 12h3M18 12h3"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>';
 function renderDrivers() {
   const q = $('drvSearch').value.trim();
-  const list = drivers.filter(d => !q || d.name.includes(q) || d.id_number.includes(q));
-  const reg = drivers.filter(d => d.device_token).length;
-  $('drvCount').textContent = `${drivers.filter(d => d.active).length} פעילים · ${reg} רשמו טלפון`;
-  $('driverList').innerHTML = table(['נהג', 'ת.ז', 'קוד', 'טלפון', 'סטטוס', ''],
-    list.map(d => `<tr>
-      <td>${nameCell(d.name)}</td><td class="mono">${esc(d.id_number)}</td><td class="mono">${esc(d.pin)}</td>
-      <td>${d.device_token ? '<span class="badge ok"><span class="dot"></span>רשום</span>' : '<span class="badge dim">טרם נרשם</span>'}</td>
+  const f = $('drvStatus').value;
+  const counts = {
+    '': drivers.length,
+    active: drivers.filter(d => d.active).length,
+    registered: drivers.filter(d => d.device_token).length,
+    unregistered: drivers.filter(d => d.active && !d.device_token).length,
+    inactive: drivers.filter(d => !d.active).length,
+  };
+  const labels = { '': 'הכול', active: 'פעילים', registered: 'רשמו טלפון', unregistered: 'טרם נרשמו', inactive: 'מושבתים' };
+  $('drvChips').innerHTML = Object.keys(labels).map(k =>
+    `<span class="chip ${k === f ? 'on' : ''}" onclick="$('drvStatus').value='${k}'; renderDrivers()">${labels[k]}<b>${counts[k]}</b></span>`).join('');
+  const match = d => ({ '': true, active: d.active, inactive: !d.active, registered: !!d.device_token, unregistered: d.active && !d.device_token })[f];
+  const list = drivers.filter(d => match(d) && (!q || d.name.includes(q) || d.id_number.includes(q)));
+  $('driverList').innerHTML = table(['#', 'נהג', 'ת.ז', 'קוד', 'טלפון', 'סטטוס', 'פעולות'],
+    list.map(d => `<tr class="${d.active ? '' : 'off'}">
+      <td class="num">${d.id}</td><td>${nameCell(d.name)}</td><td class="mono">${esc(d.id_number)}</td><td class="mono">${esc(d.pin)}</td>
+      <td>${d.device_token ? '<span class="badge ok"><span class="dot"></span>רשום</span>' : '<span class="badge warn">טרם נרשם</span>'}</td>
       <td>${d.active ? '<span class="badge ok">פעיל</span>' : '<span class="badge bad">מושבת</span>'}</td>
-      <td style="text-align:left">
-        <button class="btn ghost small" onclick="resetDevice(${d.id})">אפס טלפון</button>
-        <button class="btn ghost small" onclick="toggleActive(${d.id}, ${!d.active})">${d.active ? 'השבת' : 'הפעל'}</button>
-      </td></tr>`), 'לא נמצאו נהגים');
+      <td><div class="actions">
+        <button class="icon-btn" title="עריכה" onclick="openDriver(${d.id})">${ICON_EDIT}</button>
+        <button class="icon-btn" title="אפס טלפון" onclick="resetDevice(${d.id})">${ICON_PHONE}</button>
+        <button class="icon-btn ${d.active ? 'danger' : 'go'}" title="${d.active ? 'השבת' : 'הפעל'}" onclick="toggleActive(${d.id}, ${!d.active})">${ICON_OFF}</button>
+      </div></td></tr>`), 'לא נמצאו נהגים');
 }
 $('drvSearch').oninput = renderDrivers;
-$('addDriver').onclick = async () => {
-  const id_number = $('dIdNum').value.replace(/\D/g, '').padStart(9, '0');
-  const { error } = await sb.from('drivers').insert({ name: $('dName').value.trim(), id_number, pin: $('dPin').value.trim() });
-  if (error) return alert(error.message);
-  ['dName', 'dIdNum', 'dPin'].forEach(id => $(id).value = '');
+$('drvStatus').onchange = renderDrivers;
+
+const randomPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+let editingId = null;
+function openDriver(id) {
+  editingId = id ?? null;
+  const d = drivers.find(x => x.id === id);
+  $('drvModalTitle').textContent = d ? 'עריכת נהג' : 'הוספת נהג';
+  $('dName').value = d?.name ?? '';
+  $('dIdNum').value = d?.id_number ?? '';
+  $('dPin').value = d?.pin ?? randomPin();
+  $('drvErr').textContent = '';
+  $('drvModal').classList.remove('hidden');
+  $('dName').focus();
+}
+function closeDriver() { $('drvModal').classList.add('hidden'); }
+$('drvModal').onclick = e => { if (e.target.id === 'drvModal') closeDriver(); };
+$('saveDriver').onclick = async () => {
+  const name = $('dName').value.trim();
+  const digits = $('dIdNum').value.replace(/\D/g, '');
+  const pin = $('dPin').value.trim();
+  if (!name) return $('drvErr').textContent = 'חסר שם';
+  if (digits.length < 5 || digits.length > 9) return $('drvErr').textContent = 'תעודת זהות לא תקינה';
+  if (!/^\d{4}$/.test(pin)) return $('drvErr').textContent = 'הקוד צריך להיות 4 ספרות';
+  const row = { name, id_number: digits.padStart(9, '0'), pin };
+  const { error } = editingId
+    ? await sb.from('drivers').update(row).eq('id', editingId)
+    : await sb.from('drivers').insert(row);
+  if (error) return $('drvErr').textContent = error.message.includes('duplicate') ? 'תעודת זהות זו כבר קיימת' : error.message;
+  closeDriver();
   await loadDrivers(); renderDrivers();
 };
 async function resetDevice(id) {
