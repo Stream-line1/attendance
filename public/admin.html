@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ניהול נוכחות</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f3f4f6; color: #111; }
+  header { background: #1e3a8a; color: #fff; padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  header b { margin-left: auto; }
+  header button { background: #fff2; color: #fff; border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+  header button.active { background: #fff; color: #1e3a8a; }
+  main { max-width: 1100px; margin: 16px auto; padding: 0 16px; }
+  .box { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 6px #0001; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; }
+  th { background: #f9fafb; }
+  input, select { padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
+  button.act { padding: 8px 14px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+  button.small { padding: 4px 8px; font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .in { color: #16a34a; } .out { color: #dc2626; }
+  .hidden { display: none; }
+  #login { max-width: 360px; margin: 60px auto; }
+  #login input { width: 100%; box-sizing: border-box; margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<div id="login" class="box hidden">
+  <h2>כניסת מנהל</h2>
+  <input id="email" type="email" placeholder="אימייל">
+  <input id="password" type="password" placeholder="סיסמה">
+  <button class="act" id="loginBtn">כניסה</button>
+  <p id="loginErr" class="out"></p>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <b>מערכת נוכחות נהגים</b>
+    <button data-tab="now" class="active">במשמרת עכשיו</button>
+    <button data-tab="report">דוח שעות</button>
+    <button data-tab="drivers">נהגים</button>
+    <button data-tab="tags">קישורים לתגים</button>
+    <button id="logout">יציאה</button>
+  </header>
+  <main>
+    <section id="now" class="box"></section>
+
+    <section id="report" class="box hidden">
+      <div class="row">
+        מתאריך <input type="date" id="from"> עד <input type="date" id="to">
+        <select id="repDriver"><option value="">כל הנהגים</option></select>
+        <button class="act" id="runReport">הצג</button>
+        <button class="act" id="csvSummary">ייצוא סיכום</button>
+        <button class="act" id="csvDetail">ייצוא מפורט</button>
+      </div>
+      <h3>סיכום שעות</h3>
+      <div id="summary"></div>
+      <h3>משמרות</h3>
+      <div id="shifts"></div>
+    </section>
+
+    <section id="drivers" class="box hidden">
+      <div class="row">
+        <input id="dName" placeholder="שם">
+        <input id="dPhone" placeholder="טלפון">
+        <input id="dPin" placeholder="קוד אישי (4 ספרות)">
+        <button class="act" id="addDriver">הוסף נהג</button>
+      </div>
+      <div id="driverList"></div>
+    </section>
+
+    <section id="tags" class="box hidden">
+      <p>צרוב כל קישור על התג של המשאית (באפליקציה כמו NFC Tools: Write → Add a record → URL).</p>
+      <div id="tagList"></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtTime = t => t ? new Date(t).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+const fmtHours = ms => { const m = Math.round(ms / 60000); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
+const ymd = d => d.toLocaleDateString('en-CA');
+let drivers = [], lastShifts = [];
+
+// ---------- התחברות ----------
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  $('login').classList.toggle('hidden', !!session);
+  $('app').classList.toggle('hidden', !session);
+  if (session) { await loadDrivers(); loadNow(); }
+}
+$('loginBtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('email').value, password: $('password').value });
+  $('loginErr').textContent = error ? 'פרטים שגויים' : '';
+  if (!error) start();
+};
+$('logout').onclick = async () => { await sb.auth.signOut(); start(); };
+
+// ---------- לשוניות ----------
+document.querySelectorAll('header [data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('header [data-tab]').forEach(x => x.classList.toggle('active', x === b));
+  ['now', 'report', 'drivers', 'tags'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
+  ({ now: loadNow, report: runReport, drivers: renderDrivers, tags: renderTags })[b.dataset.tab]();
+});
+
+// ---------- נהגים ----------
+async function loadDrivers() {
+  const { data } = await sb.from('drivers').select('*').order('name');
+  drivers = data || [];
+  $('repDriver').innerHTML = '<option value="">כל הנהגים</option>' +
+    drivers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+}
+function renderDrivers() {
+  $('driverList').innerHTML = `<table><tr><th>שם</th><th>טלפון</th><th>קוד</th><th>טלפון רשום</th><th>פעיל</th><th></th></tr>` +
+    drivers.map(d => `<tr>
+      <td>${esc(d.name)}</td><td>${esc(d.phone)}</td><td>${esc(d.pin)}</td>
+      <td>${d.device_token ? '✅' : '—'}</td><td>${d.active ? '✅' : '❌'}</td>
+      <td>
+        <button class="act small" onclick="resetDevice(${d.id})">אפס טלפון</button>
+        <button class="act small" onclick="toggleActive(${d.id}, ${!d.active})">${d.active ? 'השבת' : 'הפעל'}</button>
+      </td></tr>`).join('') + '</table>';
+}
+$('addDriver').onclick = async () => {
+  const phone = $('dPhone').value.replace(/\D/g, '');
+  const { error } = await sb.from('drivers').insert({ name: $('dName').value.trim(), phone, pin: $('dPin').value.trim() });
+  if (error) return alert(error.message);
+  ['dName', 'dPhone', 'dPin'].forEach(id => $(id).value = '');
+  await loadDrivers(); renderDrivers();
+};
+async function resetDevice(id) {
+  if (!confirm('לאפס את הטלפון הרשום? הנהג יצטרך להירשם מחדש.')) return;
+  await sb.from('drivers').update({ device_token: null }).eq('id', id);
+  await loadDrivers(); renderDrivers();
+}
+async function toggleActive(id, active) {
+  await sb.from('drivers').update({ active }).eq('id', id);
+  await loadDrivers(); renderDrivers();
+}
+
+// ---------- במשמרת עכשיו ----------
+async function loadNow() {
+  const since = new Date(Date.now() - 16 * 3600e3).toISOString();
+  const { data } = await sb.from('punches').select('*').gte('at', since).order('at', { ascending: false });
+  const last = {};
+  (data || []).forEach(p => { if (!last[p.driver_id]) last[p.driver_id] = p; });
+  const on = Object.values(last).filter(p => p.kind === 'in');
+  const name = id => drivers.find(d => d.id === id)?.name ?? id;
+  $('now').innerHTML = `<h3>במשמרת עכשיו: ${on.length} מתוך ${drivers.filter(d => d.active).length}</h3>` +
+    `<table><tr><th>נהג</th><th>משאית</th><th>נכנס</th><th>משך</th><th>מיקום</th></tr>` +
+    on.map(p => `<tr><td>${esc(name(p.driver_id))}</td><td>${p.truck_id ?? '—'}</td><td>${fmtTime(p.at)}</td>
+      <td>${fmtHours(Date.now() - new Date(p.at))}</td><td>${mapLink(p)}</td></tr>`).join('') + '</table>';
+}
+const mapLink = p => p.lat ? `<a target="_blank" href="https://maps.google.com/?q=${p.lat},${p.lng}">מפה</a>` : '—';
+
+// ---------- דוח ----------
+const today = new Date();
+$('from').value = ymd(new Date(today.getFullYear(), today.getMonth(), 1));
+$('to').value = ymd(today);
+
+async function runReport() {
+  const from = new Date($('from').value + 'T00:00');
+  const to = new Date($('to').value + 'T00:00'); to.setDate(to.getDate() + 1);
+  let q = sb.from('punches').select('*').gte('at', from.toISOString()).lt('at', to.toISOString()).order('at');
+  if ($('repDriver').value) q = q.eq('driver_id', $('repDriver').value);
+  const { data, error } = await q.limit(10000);
+  if (error) return alert(error.message);
+
+  // צימוד כניסה ליציאה
+  const open = {}, shifts = [];
+  for (const p of data) {
+    if (p.kind === 'in') {
+      if (open[p.driver_id]) shifts.push({ driver: p.driver_id, in: open[p.driver_id], out: null });
+      open[p.driver_id] = p;
+    } else {
+      shifts.push({ driver: p.driver_id, in: open[p.driver_id] || null, out: p });
+      delete open[p.driver_id];
+    }
+  }
+  Object.entries(open).forEach(([d, p]) => shifts.push({ driver: +d, in: p, out: null }));
+  shifts.forEach(s => s.ms = s.in && s.out ? new Date(s.out.at) - new Date(s.in.at) : 0);
+  shifts.sort((a, b) => new Date((b.in || b.out).at) - new Date((a.in || a.out).at));
+  lastShifts = shifts;
+
+  const name = id => drivers.find(d => d.id === id)?.name ?? id;
+  const sum = {};
+  shifts.forEach(s => { sum[s.driver] ??= { ms: 0, n: 0, broken: 0 }; sum[s.driver].ms += s.ms; sum[s.driver].n++; if (!s.ms) sum[s.driver].broken++; });
+
+  $('summary').innerHTML = `<table><tr><th>נהג</th><th>משמרות</th><th>סה"כ שעות</th><th>משמרות חסרות</th></tr>` +
+    Object.entries(sum).sort((a, b) => b[1].ms - a[1].ms).map(([d, s]) =>
+      `<tr><td>${esc(name(+d))}</td><td>${s.n}</td><td>${fmtHours(s.ms)}</td><td class="${s.broken ? 'out' : ''}">${s.broken}</td></tr>`).join('') + '</table>';
+  $('shifts').innerHTML = `<table><tr><th>נהג</th><th>משאית</th><th>כניסה</th><th>יציאה</th><th>שעות</th><th>מיקום</th></tr>` +
+    shifts.map(s => `<tr><td>${esc(name(s.driver))}</td><td>${(s.in || s.out).truck_id ?? '—'}</td>
+      <td>${s.in ? fmtTime(s.in.at) : '<span class="out">חסר</span>'}</td>
+      <td>${s.out ? fmtTime(s.out.at) : '<span class="out">חסר</span>'}</td>
+      <td>${s.ms ? fmtHours(s.ms) : '—'}</td><td>${mapLink(s.in || s.out)}</td></tr>`).join('') + '</table>';
+}
+$('runReport').onclick = runReport;
+
+function downloadCsv(name, rows) {
+  const csv = '﻿' + rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = name; a.click();
+}
+const dname = id => drivers.find(d => d.id === id)?.name ?? id;
+$('csvDetail').onclick = () => downloadCsv(`משמרות_${$('from').value}_${$('to').value}.csv`,
+  [['נהג', 'משאית', 'כניסה', 'יציאה', 'שעות']].concat(lastShifts.map(s =>
+    [dname(s.driver), (s.in || s.out).truck_id, s.in && fmtTime(s.in.at), s.out && fmtTime(s.out.at), s.ms ? (s.ms / 3600e3).toFixed(2) : ''])));
+$('csvSummary').onclick = () => {
+  const sum = {};
+  lastShifts.forEach(s => { sum[s.driver] ??= [0, 0]; sum[s.driver][0] += s.ms; sum[s.driver][1]++; });
+  downloadCsv(`סיכום_${$('from').value}_${$('to').value}.csv`,
+    [['נהג', 'משמרות', 'שעות']].concat(Object.entries(sum).map(([d, [ms, n]]) => [dname(+d), n, (ms / 3600e3).toFixed(2)])));
+};
+
+// ---------- קישורים לתגים ----------
+async function renderTags() {
+  const { data } = await sb.from('trucks').select('*').order('id');
+  const base = location.href.replace(/admin\.html.*$/, '');
+  $('tagList').innerHTML = `<table><tr><th>תג</th><th>משאית</th><th>קישור לצריבה</th></tr>` +
+    (data || []).map(t => `<tr><td>${t.id}</td><td>${esc(t.name)}</td><td dir="ltr">${base}?truck=${t.id}</td></tr>`).join('') + '</table>';
+}
+
+start();
+</script>
+</body>
+</html>

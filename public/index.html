@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>החתמת נוכחות</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f3f4f6; color: #111; }
+  .card { max-width: 420px; margin: 40px auto; background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px #0001; text-align: center; }
+  h1 { font-size: 22px; margin: 0 0 16px; }
+  input { width: 100%; box-sizing: border-box; font-size: 18px; padding: 12px; margin: 6px 0; border: 1px solid #ccc; border-radius: 10px; }
+  button { width: 100%; font-size: 18px; padding: 14px; margin-top: 12px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; }
+  .big { font-size: 64px; margin: 8px 0; }
+  .in { color: #16a34a; } .out { color: #dc2626; }
+  .muted { color: #666; font-size: 14px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="loading">טוען…</div>
+
+  <div id="register" class="hidden">
+    <h1>רישום טלפון</h1>
+    <p class="muted">פעם אחת בלבד. הקוד מתקבל מהמנהל.</p>
+    <input id="phone" type="tel" placeholder="מספר טלפון" autocomplete="tel">
+    <input id="pin" type="tel" placeholder="קוד אישי">
+    <button id="regBtn">רישום</button>
+  </div>
+
+  <div id="result" class="hidden">
+    <div id="icon" class="big"></div>
+    <h1 id="title"></h1>
+    <div id="details"></div>
+    <p class="muted" id="truck"></p>
+  </div>
+
+  <p id="error" class="out"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+const truck = parseInt(new URLSearchParams(location.search).get('truck')) || null;
+const $ = id => document.getElementById(id);
+const show = id => ['loading', 'register', 'result'].forEach(x => $(x).classList.toggle('hidden', x !== id));
+
+function getToken() { try { return localStorage.getItem('driverToken'); } catch { return null; } }
+function setToken(t) { try { localStorage.setItem('driverToken', t); } catch {} }
+
+function getLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve({});
+    navigator.geolocation.getCurrentPosition(
+      p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => resolve({}),
+      { timeout: 5000, maximumAge: 60000 });
+  });
+}
+
+async function doPunch() {
+  show('loading');
+  $('error').textContent = '';
+  const loc = await getLocation();
+  const { data, error } = await sb.rpc('punch', {
+    p_token: getToken(), p_truck: truck, p_lat: loc.lat ?? null, p_lng: loc.lng ?? null });
+  if (error) {
+    if (error.message.includes('לא רשום')) { setToken(''); show('register'); }
+    $('error').textContent = error.message;
+    return;
+  }
+  const isIn = data.kind === 'in';
+  $('icon').textContent = isIn ? '✅' : '👋';
+  $('title').textContent = isIn ? 'כניסה נרשמה' : 'יציאה נרשמה';
+  $('title').className = isIn ? 'in' : 'out';
+  $('details').textContent = `${data.name} · ${new Date(data.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`
+    + (data.duplicate ? ' (כבר נרשם)' : '');
+  $('truck').textContent = truck ? `משאית ${truck}` : '';
+  show('result');
+}
+
+$('regBtn').onclick = async () => {
+  $('error').textContent = '';
+  const { data, error } = await sb.rpc('register_device', { p_phone: $('phone').value, p_pin: $('pin').value.trim() });
+  if (error) { $('error').textContent = error.message; return; }
+  setToken(data.token);
+  doPunch();
+};
+
+getToken() ? doPunch() : show('register');
+</script>
+</body>
+</html>
