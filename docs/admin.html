@@ -175,6 +175,16 @@
   .role-card p { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
   body.viewer .admin-only, body.viewer .write-only { display: none !important; }
 
+  .monthly { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; padding: 18px 20px; border-radius: 22px; color: #fff;
+    background: linear-gradient(120deg, var(--navy), var(--navy-3)); box-shadow: 0 12px 30px rgba(11,21,48,.25); }
+  .monthly-ic { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.1); display: grid; place-items: center; flex: none; }
+  .monthly-ic svg { width: 26px; height: 26px; color: #4ade80; }
+  .monthly-txt { flex: 1; min-width: 200px; }
+  .monthly-txt b { display: block; font-size: 18px; }
+  .monthly-txt span { color: #9aa6c4; font-size: 14px; }
+  .monthly input { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff; color-scheme: dark; }
+  .btn:disabled { opacity: .6; cursor: wait; }
+
   /* ---------- מובייל ---------- */
   .menu-btn { display: none; }
   @media (max-width: 900px) {
@@ -297,6 +307,12 @@
     <!-- דוח -->
     <section id="report" class="hidden">
       <div class="page-head"><div><h1>דוח שעות</h1><p>סיכום משמרות לפי תקופה, מוכן לשכר</p></div></div>
+      <div class="monthly">
+        <div class="monthly-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13l3 4M11 13l-3 4M14 13h3M14 17h3"/></svg></div>
+        <div class="monthly-txt"><b>דוח חודשי לאקסל</b><span>קובץ אחד לשכר: סיכום לפי נהג, פירוט משמרות וכל ההחתמות</span></div>
+        <input type="month" id="monthPick">
+        <button class="btn red big" id="monthlyBtn">הורדת דוח חודשי (Excel)</button>
+      </div>
       <div class="filters">
         <label>מתאריך</label><input type="date" id="from">
         <label>עד</label><input type="date" id="to">
@@ -398,6 +414,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="config.js"></script>
 <script>
 const sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
@@ -816,6 +833,90 @@ async function toggleManager(uid) {
   if (error) return alert(error.message);
   loadManagers();
 }
+
+// ---------- דוח חודשי לאקסל ----------
+function pairShifts(punches) {
+  const open = {}, shifts = [];
+  for (const p of punches) {
+    if (p.kind === 'in') {
+      if (open[p.driver_id]) shifts.push({ driver: p.driver_id, in: open[p.driver_id], out: null });
+      open[p.driver_id] = p;
+    } else {
+      shifts.push({ driver: p.driver_id, in: open[p.driver_id] || null, out: p });
+      delete open[p.driver_id];
+    }
+  }
+  Object.entries(open).forEach(([d, p]) => shifts.push({ driver: +d, in: p, out: null }));
+  shifts.forEach(s => s.ms = s.in && s.out ? new Date(s.out.at) - new Date(s.in.at) : 0);
+  return shifts;
+}
+const hrs = ms => +(ms / 3600e3).toFixed(2);
+const dateOnly = t => new Date(t).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const timeOnly = t => t ? new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
+
+$('monthPick').value = ymd(new Date()).slice(0, 7);
+$('monthlyBtn').onclick = async () => {
+  const btn = $('monthlyBtn');
+  const [y, m] = $('monthPick').value.split('-').map(Number);
+  if (!y) return alert('יש לבחור חודש');
+  btn.disabled = true; btn.textContent = 'מכין דוח…';
+  try {
+    const from = new Date(y, m - 1, 1), to = new Date(y, m, 1);
+    const [{ data: raw, error }, voided] = await Promise.all([
+      sb.from('punches').select('*').gte('at', from.toISOString()).lt('at', to.toISOString()).order('at').limit(20000),
+      voidedIds()]);
+    if (error) throw error;
+    const punches = raw.filter(p => !voided.has(p.id));
+    const shifts = pairShifts(punches);
+    const monthName = from.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+
+    // סיכום לפי נהג
+    const byDriver = {};
+    drivers.filter(d => d.active).forEach(d => byDriver[d.id] = { ms: 0, n: 0, broken: 0, days: new Set() });
+    shifts.forEach(s => {
+      const b = byDriver[s.driver] ??= { ms: 0, n: 0, broken: 0, days: new Set() };
+      b.ms += s.ms; b.n++; if (!s.ms) b.broken++;
+      b.days.add(dateOnly((s.in || s.out).at));
+    });
+    const summary = [['נהג', 'ת.ז', 'ימי עבודה', 'משמרות', 'סה"כ שעות', 'ממוצע שעות ליום', 'משמרות חסרות']];
+    Object.entries(byDriver)
+      .map(([id, b]) => ({ d: drivers.find(x => x.id === +id), b }))
+      .sort((a, b) => (a.d?.name || '').localeCompare(b.d?.name || '', 'he'))
+      .forEach(({ d, b }) => summary.push([d?.name ?? '', d?.id_number ?? '', b.days.size, b.n, hrs(b.ms),
+        b.days.size ? hrs(b.ms / b.days.size) : 0, b.broken]));
+    summary.push([], ['סה"כ', '', '', shifts.length, hrs(shifts.reduce((a, s) => a + s.ms, 0)), '', shifts.filter(s => !s.ms).length]);
+
+    // פירוט משמרות
+    const detail = [['נהג', 'תאריך', 'כניסה', 'יציאה', 'שעות', 'משאית', 'הערה']];
+    shifts.slice().sort((a, b) => new Date((a.in || a.out).at) - new Date((b.in || b.out).at)).forEach(s => {
+      const note = !s.in ? 'חסרה כניסה' : !s.out ? 'חסרה יציאה' : ((s.in.manual || s.out.manual) ? 'כולל רשומה ידנית' : '');
+      detail.push([dname(s.driver), dateOnly((s.in || s.out).at), timeOnly(s.in?.at), timeOnly(s.out?.at),
+        s.ms ? hrs(s.ms) : '', (s.in || s.out).truck_id ?? '', note]);
+    });
+
+    // כל ההחתמות
+    const all = [['נהג', 'סוג', 'תאריך', 'שעה', 'משאית', 'מקור', 'סיבה (ידני)']];
+    punches.forEach(p => all.push([dname(p.driver_id), p.kind === 'in' ? 'כניסה' : 'יציאה', dateOnly(p.at), timeOnly(p.at),
+      p.truck_id ?? '', p.manual ? 'ידני' : 'NFC', p.reason ?? '']));
+
+    const wb = XLSX.utils.book_new();
+    wb.Workbook = { Views: [{ RTL: true }] };
+    const add = (rows, name, widths) => {
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = widths.map(w => ({ wch: w }));
+      ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: 0, c: rows[0].length - 1 } }) };
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+    add(summary, 'סיכום לפי נהג', [24, 12, 10, 10, 11, 15, 14]);
+    add(detail, 'פירוט משמרות', [24, 12, 9, 9, 8, 8, 18]);
+    add(all, 'כל ההחתמות', [24, 8, 12, 8, 8, 8, 30]);
+    XLSX.writeFile(wb, `דוח נוכחות ${monthName}.xlsx`);
+  } catch (e) {
+    alert('שגיאה בהכנת הדוח: ' + (e.message || e));
+  } finally {
+    btn.disabled = false; btn.textContent = 'הורדת דוח חודשי (Excel)';
+  }
+};
 
 start();
 </script>
