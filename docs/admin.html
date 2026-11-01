@@ -5,18 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ניהול נוכחות · המוביל החדש</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy: #0b1530; --navy-2: #13235a; --blue: #1f3fa8; --red: #e3262d; --gold: #c9a45a;
-    --bg: #f4f5f9; --card: #fff; --text: #141a2e; --muted: #7a8299; --line: #e8eaf1;
-    --green: #16a34a; --green-bg: #e8f7ee; --red-bg: #fdecec;
+    --navy: #0b1530; --navy-2: #13235a; --navy-3: #1c2f6e; --blue: #1f3fa8; --red: #e3262d; --gold: #c9a45a;
+    --bg: #f3f5fa; --card: #fff; --text: #141a2e; --muted: #7a8299; --line: #e8eaf1;
+    --green: #16a34a; --green-bg: #e8f7ee; --red-bg: #fdecec; --amber: #b7791f; --amber-bg: #fdf4e3;
+    --side: 270px;
   }
   * { box-sizing: border-box; }
-  body { font-family: 'Heebo', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+  body { font-family: 'Heebo', system-ui, sans-serif; margin: 0; color: var(--text);
+    background: radial-gradient(900px 500px at 20% -10%, rgba(31,63,168,.08), transparent 60%),
+                radial-gradient(700px 400px at 100% 100%, rgba(227,38,45,.06), transparent 60%), var(--bg);
+    min-height: 100vh; }
   .hidden { display: none !important; }
 
-  /* כניסה */
+  /* ---------- כניסה ---------- */
   #login {
     min-height: 100vh; display: grid; place-items: center; padding: 16px;
     background:
@@ -30,7 +34,7 @@
     box-shadow: 0 30px 60px rgba(0,0,0,.4);
   }
   .login-card .logo { background: #fff; border-radius: 18px; padding: 4px; display: inline-block; margin-bottom: 18px; }
-  .login-card .logo img { width: 230px; height: 128px; object-fit: cover; display: block; }
+  .login-card .logo img { width: 230px; height: 128px; object-fit: cover; display: block; border-radius: 14px; }
   .login-card h2 { margin: 0 0 4px; font-weight: 800; }
   .login-card p { margin: 0 0 22px; color: #9aa6c4; font-weight: 300; }
   .login-card input { width: 100%; margin: 6px 0; padding: 14px 16px; border-radius: 14px; font: 500 16px 'Heebo';
@@ -41,68 +45,101 @@
     font: 700 17px 'Heebo'; color: #fff; background: linear-gradient(135deg, var(--red), #b3141b); box-shadow: 0 12px 26px rgba(227,38,45,.4); }
   .login-err { color: #ff8a8f; min-height: 1.2em; margin-top: 12px; }
 
-  /* מבנה */
-  header {
-    background: linear-gradient(120deg, var(--navy), var(--navy-2)); color: #fff;
-    position: sticky; top: 0; z-index: 10; box-shadow: 0 6px 24px rgba(11,21,48,.25);
+  /* ---------- סרגל צד ---------- */
+  aside {
+    position: fixed; top: 0; bottom: 0; right: 0; width: var(--side); z-index: 20;
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: #fff; display: flex; flex-direction: column; padding: 22px 16px;
+    box-shadow: -10px 0 40px rgba(11,21,48,.25);
   }
-  .bar { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  .bar .logo { background: #fff; border-radius: 12px; padding: 2px; }
-  .bar .logo img { width: 110px; height: 60px; object-fit: cover; display: block; border-radius: 10px; }
-  .bar .title { font-weight: 700; font-size: 17px; }
-  .bar .title small { display: block; font-weight: 300; font-size: 12px; color: #9aa6c4; }
-  nav { display: flex; gap: 4px; background: rgba(255,255,255,.07); padding: 4px; border-radius: 14px; margin-inline-start: auto; flex-wrap: wrap; }
-  nav button { background: none; border: 0; color: #c7cfe6; font: 500 14px 'Heebo'; padding: 9px 16px; border-radius: 10px; cursor: pointer; transition: .2s; }
-  nav button:hover { color: #fff; }
-  nav button.active { background: #fff; color: var(--navy); font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
-  .logout { background: none; border: 1px solid rgba(255,255,255,.2); color: #c7cfe6; font: 500 13px 'Heebo'; padding: 8px 14px; border-radius: 10px; cursor: pointer; }
-  .accent { height: 3px; background: linear-gradient(90deg, var(--red), var(--gold), var(--blue)); }
+  aside::after { content: ''; position: absolute; inset: auto 0 0 0; height: 220px; pointer-events: none;
+    background: radial-gradient(260px 160px at 50% 100%, rgba(227,38,45,.25), transparent 70%); }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 4px 6px 22px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 18px; }
+  .brand .logo { background: #fff; border-radius: 14px; padding: 2px; flex: none; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+  .brand .logo img { width: 92px; height: 52px; object-fit: cover; display: block; border-radius: 12px; }
+  .brand b { display: block; font-size: 19px; font-weight: 800; }
+  .brand small { color: #9aa6c4; font-weight: 300; font-size: 13px; }
+  aside nav { display: flex; flex-direction: column; gap: 4px; }
+  aside nav button {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: right;
+    background: none; border: 0; color: #b9c3de; font: 500 16px 'Heebo'; padding: 13px 14px; border-radius: 14px; cursor: pointer; transition: .2s;
+  }
+  aside nav button svg { width: 20px; height: 20px; flex: none; opacity: .8; }
+  aside nav button:hover { background: rgba(255,255,255,.06); color: #fff; }
+  aside nav button.active { background: rgba(255,255,255,.1); color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 var(--red); }
+  aside nav button.active svg { opacity: 1; color: var(--red); }
+  .side-foot { margin-top: auto; position: relative; z-index: 1; }
+  .user { display: flex; align-items: center; gap: 10px; padding: 12px 6px; color: #c7cfe6; font-size: 14px; overflow: hidden; }
+  .user .av { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.12); display: grid; place-items: center; font-weight: 700; flex: none; }
+  .user span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .logout { width: 100%; padding: 13px; border: 0; border-radius: 14px; cursor: pointer; font: 700 15px 'Heebo'; color: #fff;
+    background: linear-gradient(135deg, var(--red), #b3141b); box-shadow: 0 10px 24px rgba(227,38,45,.35); }
 
-  main { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
-  .page-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-  .page-head h1 { margin: 0; font-size: 26px; font-weight: 800; }
-  .page-head p { margin: 2px 0 0; color: var(--muted); font-weight: 300; }
+  /* ---------- תוכן ---------- */
+  main { margin-right: var(--side); padding: 34px 32px 48px; max-width: 1400px; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .page-head h1 { margin: 0; font-size: 38px; font-weight: 900; letter-spacing: -.5px; }
+  .page-head p { margin: 4px 0 0; color: var(--muted); font-weight: 400; font-size: 16px; }
 
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
-  .kpi { background: var(--card); border-radius: 20px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(20,26,46,.05); border: 1px solid var(--line); position: relative; overflow: hidden; }
-  .kpi::after { content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--blue)); }
-  .kpi .label { color: var(--muted); font-size: 14px; }
-  .kpi .value { font-size: 38px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 22px; }
+  .kpi { background: var(--card); border-radius: 22px; padding: 20px 22px; box-shadow: 0 4px 18px rgba(20,26,46,.05); border: 1px solid var(--line); position: relative; overflow: hidden; transition: transform .2s; }
+  .kpi:hover { transform: translateY(-2px); }
+  .kpi .top { display: flex; align-items: center; justify-content: space-between; }
+  .kpi .label { color: var(--muted); font-size: 15px; }
+  .kpi .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--tint); color: var(--c); }
+  .kpi .ic svg { width: 20px; height: 20px; }
+  .kpi .value { font-size: 40px; font-weight: 900; line-height: 1.1; margin-top: 10px; }
   .kpi .sub { color: var(--muted); font-size: 13px; }
 
-  .box { background: var(--card); border-radius: 20px; padding: 6px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(20,26,46,.05); border: 1px solid var(--line); overflow-x: auto; }
-  .box-head { padding: 16px 18px 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .box-head h3 { margin: 0; font-size: 17px; font-weight: 700; }
+  .box { background: var(--card); border-radius: 22px; padding: 6px; margin-bottom: 22px; box-shadow: 0 4px 18px rgba(20,26,46,.05); border: 1px solid var(--line); overflow-x: auto; }
+  .box-head { padding: 18px 20px 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .box-head h3 { margin: 0; font-size: 20px; font-weight: 800; }
+  .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; }
   table { border-collapse: collapse; width: 100%; font-size: 15px; }
-  th { text-align: right; font-weight: 500; color: var(--muted); font-size: 13px; padding: 10px 18px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  td { padding: 13px 18px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { text-align: right; font-weight: 500; color: var(--muted); font-size: 13px; padding: 10px 20px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 13px 20px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   tr:last-child td { border-bottom: 0; }
   tbody tr:hover { background: #fafbfd; }
-  .empty { text-align: center; color: var(--muted); padding: 40px; }
+  .empty { text-align: center; color: var(--muted); padding: 44px 20px; }
+  .empty svg { width: 40px; height: 40px; opacity: .35; display: block; margin: 0 auto 8px; }
 
   .name { display: flex; align-items: center; gap: 10px; font-weight: 500; }
   .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; background: linear-gradient(135deg, var(--blue), var(--navy-2)); flex: none; }
   .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 13px; font-weight: 500; }
   .badge.ok { background: var(--green-bg); color: var(--green); }
   .badge.bad { background: var(--red-bg); color: var(--red); }
+  .badge.warn { background: var(--amber-bg); color: var(--amber); }
   .badge.dim { background: #eef0f5; color: var(--muted); }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
   .live .dot { animation: blink 1.6s infinite; }
   @keyframes blink { 50% { opacity: .3; } }
   a.map { color: var(--blue); text-decoration: none; font-weight: 500; }
 
-  .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin-bottom: 20px; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin-bottom: 22px; }
   .filters label { color: var(--muted); font-size: 14px; }
   input, select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font: 400 15px 'Heebo'; background: #fafbfd; color: var(--text); outline: none; }
   input:focus, select:focus { border-color: var(--blue); background: #fff; }
   .btn { padding: 10px 18px; border: 0; border-radius: 12px; cursor: pointer; font: 600 14px 'Heebo'; color: #fff; background: var(--navy); transition: .15s; }
-  .btn:hover { filter: brightness(1.2); }
+  .btn:hover { filter: brightness(1.25); }
   .btn.red { background: linear-gradient(135deg, var(--red), #b3141b); }
   .btn.ghost { background: #fff; color: var(--navy); border: 1px solid var(--line); }
   .btn.small { padding: 6px 12px; font-size: 13px; }
   .search { min-width: 220px; }
   .mono { font-family: ui-monospace, Consolas, monospace; direction: ltr; unicode-bidi: plaintext; color: #3b4566; font-size: 13px; }
   .copy-done { color: var(--green) !important; }
+
+  /* ---------- מובייל ---------- */
+  .menu-btn { display: none; }
+  @media (max-width: 900px) {
+    aside { transform: translateX(100%); transition: transform .25s; width: 280px; }
+    aside.open { transform: none; }
+    main { margin-right: 0; padding: 76px 16px 32px; }
+    .menu-btn { display: flex; position: fixed; top: 12px; right: 12px; left: 12px; z-index: 15; align-items: center; justify-content: space-between;
+      background: linear-gradient(120deg, var(--navy), var(--navy-2)); color: #fff; border: 0; border-radius: 16px; padding: 8px 14px; box-shadow: 0 8px 24px rgba(11,21,48,.3); font: 700 16px 'Heebo'; }
+    .menu-btn img { width: 74px; height: 40px; object-fit: cover; border-radius: 10px; background: #fff; }
+    .grid2 { grid-template-columns: 1fr; }
+    .page-head h1 { font-size: 30px; }
+  }
 </style>
 </head>
 <body>
@@ -120,60 +157,49 @@
 </div>
 
 <div id="app" class="hidden">
-  <header>
-    <div class="bar">
+  <button class="menu-btn" id="menuBtn"><span>☰ תפריט</span><img src="logo.jpg" alt=""></button>
+
+  <aside id="side">
+    <div class="brand">
       <div class="logo"><img src="logo.jpg" alt="קבוצת המוביל החדש"></div>
-      <div class="title">מערכת נוכחות<small>קבוצת המוביל החדש</small></div>
-      <nav>
-        <button data-tab="now" class="active">במשמרת עכשיו</button>
-        <button data-tab="report">דוח שעות</button>
-        <button data-tab="drivers">נהגים</button>
-        <button data-tab="tags">קישורים לתגים</button>
-      </nav>
-      <button class="logout" id="logout">יציאה</button>
+      <div><b>נוכחות</b><small>קבוצת המוביל החדש</small></div>
     </div>
-    <div class="accent"></div>
-  </header>
+    <nav>
+      <button data-tab="now" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>לוח בקרה</button>
+      <button data-tab="drivers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8"/><path d="M22 21a7 7 0 0 0-4-6.3"/></svg>נהגים</button>
+      <button data-tab="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>דוח שעות</button>
+      <button data-tab="tags"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 0 1 0 7"/><path d="M9.5 6a10 10 0 0 1 0 12"/><path d="M13 3.5a14 14 0 0 1 0 17"/></svg>תגי NFC</button>
+    </nav>
+    <div class="side-foot">
+      <div class="user"><span class="av" id="userAv">מ</span><span id="userEmail"></span></div>
+      <button class="logout" id="logout">התנתקות</button>
+    </div>
+  </aside>
 
   <main>
-    <!-- במשמרת עכשיו -->
+    <!-- לוח בקרה -->
     <section id="now">
       <div class="page-head">
         <div><h1>לוח בקרה</h1><p id="nowDate"></p></div>
-        <button class="btn ghost" onclick="loadNow()">רענון</button>
+        <span class="badge ok live"><span class="dot"></span>מתעדכן אוטומטית</span>
       </div>
       <div class="kpis">
-        <div class="kpi" style="--c: var(--green)"><div class="label">במשמרת עכשיו</div><div class="value" id="kOn">–</div><div class="sub">נהגים פעילים בשטח</div></div>
-        <div class="kpi" style="--c: var(--blue)"><div class="label">החתימו היום</div><div class="value" id="kToday">–</div><div class="sub" id="kTodaySub"></div></div>
-        <div class="kpi" style="--c: var(--gold)"><div class="label">שעות היום</div><div class="value" id="kHours">–</div><div class="sub">משמרות שהסתיימו</div></div>
-        <div class="kpi" style="--c: var(--red)"><div class="label">נהגים רשומים</div><div class="value" id="kReg">–</div><div class="sub" id="kRegSub"></div></div>
+        <div class="kpi" style="--c: var(--green); --tint: var(--green-bg)"><div class="top"><span class="label">במשמרת כעת</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div><div class="value" id="kOn">–</div><div class="sub">נהגים בשטח עכשיו</div></div>
+        <div class="kpi" style="--c: var(--blue); --tint: #e9eefc"><div class="top"><span class="label">החתימו היום</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div><div class="value" id="kToday">–</div><div class="sub" id="kTodaySub"></div></div>
+        <div class="kpi" style="--c: var(--gold); --tint: var(--amber-bg)"><div class="top"><span class="label">שעות היום</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span></div><div class="value" id="kHours">–</div><div class="sub">משמרות שהסתיימו</div></div>
+        <div class="kpi" style="--c: var(--red); --tint: var(--red-bg)"><div class="top"><span class="label">לא החתימו היום</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/></svg></span></div><div class="value" id="kAbsent">–</div><div class="sub">נהגים פעילים</div></div>
+        <div class="kpi" style="--c: var(--navy-3); --tint: #eceff7"><div class="top"><span class="label">רשמו טלפון</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span></div><div class="value" id="kReg">–</div><div class="sub" id="kRegSub"></div></div>
       </div>
-      <div class="box">
-        <div class="box-head"><h3>נהגים במשמרת</h3><span class="badge ok live"><span class="dot"></span>עדכני</span></div>
-        <div id="nowTable"></div>
+      <div class="grid2">
+        <div class="box">
+          <div class="box-head"><h3>אירועים אחרונים היום</h3><button class="btn ghost small" onclick="loadNow()">רענון</button></div>
+          <div id="eventsTable"></div>
+        </div>
+        <div class="box">
+          <div class="box-head"><h3>במשמרת עכשיו</h3><span class="badge ok live"><span class="dot"></span><span id="onCount">0</span></span></div>
+          <div id="nowTable"></div>
+        </div>
       </div>
-    </section>
-
-    <!-- דוח -->
-    <section id="report" class="hidden">
-      <div class="page-head"><div><h1>דוח שעות</h1><p>סיכום משמרות לפי תקופה</p></div></div>
-      <div class="filters">
-        <label>מתאריך</label><input type="date" id="from">
-        <label>עד</label><input type="date" id="to">
-        <select id="repDriver"><option value="">כל הנהגים</option></select>
-        <button class="btn" id="runReport">הצג</button>
-        <span style="flex:1"></span>
-        <button class="btn ghost" id="csvSummary">ייצוא סיכום</button>
-        <button class="btn ghost" id="csvDetail">ייצוא מפורט</button>
-      </div>
-      <div class="kpis">
-        <div class="kpi" style="--c: var(--blue)"><div class="label">סה״כ שעות</div><div class="value" id="rHours">–</div></div>
-        <div class="kpi" style="--c: var(--green)"><div class="label">משמרות</div><div class="value" id="rShifts">–</div></div>
-        <div class="kpi" style="--c: var(--gold)"><div class="label">נהגים שעבדו</div><div class="value" id="rDrivers">–</div></div>
-        <div class="kpi" style="--c: var(--red)"><div class="label">משמרות חסרות</div><div class="value" id="rBroken">–</div><div class="sub">כניסה או יציאה חסרה</div></div>
-      </div>
-      <div class="box"><div class="box-head"><h3>סיכום לפי נהג</h3></div><div id="summary"></div></div>
-      <div class="box"><div class="box-head"><h3>פירוט משמרות</h3></div><div id="shifts"></div></div>
     </section>
 
     <!-- נהגים -->
@@ -185,14 +211,36 @@
         <input id="dPin" placeholder="קוד אישי (4 ספרות)" inputmode="numeric">
         <button class="btn red" id="addDriver">+ הוסף נהג</button>
         <span style="flex:1"></span>
-        <input id="drvSearch" class="search" placeholder="חיפוש נהג…">
+        <input id="drvSearch" class="search" placeholder="חיפוש לפי שם או ת.ז…">
       </div>
       <div class="box" id="driverList"></div>
     </section>
 
+    <!-- דוח -->
+    <section id="report" class="hidden">
+      <div class="page-head"><div><h1>דוח שעות</h1><p>סיכום משמרות לפי תקופה, מוכן לשכר</p></div></div>
+      <div class="filters">
+        <label>מתאריך</label><input type="date" id="from">
+        <label>עד</label><input type="date" id="to">
+        <select id="repDriver"><option value="">כל הנהגים</option></select>
+        <button class="btn" id="runReport">הצג</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="csvSummary">ייצוא סיכום</button>
+        <button class="btn ghost" id="csvDetail">ייצוא מפורט</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi" style="--c: var(--blue); --tint: #e9eefc"><div class="top"><span class="label">סה״כ שעות</span></div><div class="value" id="rHours">–</div></div>
+        <div class="kpi" style="--c: var(--green); --tint: var(--green-bg)"><div class="top"><span class="label">משמרות</span></div><div class="value" id="rShifts">–</div></div>
+        <div class="kpi" style="--c: var(--gold); --tint: var(--amber-bg)"><div class="top"><span class="label">נהגים שעבדו</span></div><div class="value" id="rDrivers">–</div></div>
+        <div class="kpi" style="--c: var(--red); --tint: var(--red-bg)"><div class="top"><span class="label">משמרות חסרות</span></div><div class="value" id="rBroken">–</div><div class="sub">כניסה או יציאה חסרה</div></div>
+      </div>
+      <div class="box"><div class="box-head"><h3>סיכום לפי נהג</h3></div><div id="summary"></div></div>
+      <div class="box"><div class="box-head"><h3>פירוט משמרות</h3></div><div id="shifts"></div></div>
+    </section>
+
     <!-- תגים -->
     <section id="tags" class="hidden">
-      <div class="page-head"><div><h1>קישורים לתגים</h1><p>צורבים כל קישור על תג המשאית באפליקציית NFC Tools: Write ← Add a record ← URL</p></div></div>
+      <div class="page-head"><div><h1>תגי NFC</h1><p>צורבים כל קישור על תג המשאית באפליקציית NFC Tools: Write ← Add a record ← URL</p></div></div>
       <div class="box" id="tagList"></div>
     </section>
   </main>
@@ -210,10 +258,12 @@ const fmtHours = ms => { const m = Math.round(ms / 60000); return `${Math.floor(
 const ymd = d => d.toLocaleDateString('en-CA');
 const initials = n => String(n).trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('');
 const nameCell = n => `<div class="name"><span class="avatar">${esc(initials(n))}</span>${esc(n)}</div>`;
+const EMPTY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>';
 const table = (head, rows, empty) => rows.length
   ? `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`
-  : `<div class="empty">${empty}</div>`;
+  : `<div class="empty">${EMPTY_ICON}${empty}</div>`;
 const mapLink = p => p && p.lat ? `<a class="map" target="_blank" href="https://maps.google.com/?q=${p.lat},${p.lng}">מפה ↗</a>` : '<span style="color:var(--muted)">—</span>';
+const kindBadge = k => k === 'in' ? '<span class="badge ok"><span class="dot"></span>כניסה</span>' : '<span class="badge bad"><span class="dot"></span>יציאה</span>';
 let drivers = [], lastShifts = [];
 const dname = id => drivers.find(d => d.id === id)?.name ?? id;
 
@@ -222,7 +272,11 @@ async function start() {
   const { data: { session } } = await sb.auth.getSession();
   $('login').classList.toggle('hidden', !!session);
   $('app').classList.toggle('hidden', !session);
-  if (session) { await loadDrivers(); loadNow(); }
+  if (session) {
+    $('userEmail').textContent = session.user.email;
+    $('userAv').textContent = (session.user.email || 'מ')[0].toUpperCase();
+    await loadDrivers(); loadNow();
+  }
 }
 $('loginBtn').onclick = async () => {
   const { error } = await sb.auth.signInWithPassword({ email: $('email').value, password: $('password').value });
@@ -232,10 +286,12 @@ $('loginBtn').onclick = async () => {
 $('password').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
 $('logout').onclick = async () => { await sb.auth.signOut(); start(); };
 
-// ---------- לשוניות ----------
-document.querySelectorAll('nav [data-tab]').forEach(b => b.onclick = () => {
-  document.querySelectorAll('nav [data-tab]').forEach(x => x.classList.toggle('active', x === b));
+// ---------- ניווט ----------
+$('menuBtn').onclick = () => $('side').classList.toggle('open');
+document.querySelectorAll('aside nav [data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('aside nav [data-tab]').forEach(x => x.classList.toggle('active', x === b));
   ['now', 'report', 'drivers', 'tags'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
+  $('side').classList.remove('open');
   ({ now: loadNow, report: runReport, drivers: renderDrivers, tags: renderTags })[b.dataset.tab]();
 });
 
@@ -298,16 +354,23 @@ async function loadNow() {
   });
   const active = drivers.filter(d => d.active).length;
   const reg = drivers.filter(d => d.device_token).length;
+  const todayCount = new Set(today.map(p => p.driver_id)).size;
   $('kOn').textContent = on.length;
-  $('kToday').textContent = new Set(today.map(p => p.driver_id)).size;
+  $('onCount').textContent = on.length;
+  $('kToday').textContent = todayCount;
   $('kTodaySub').textContent = `מתוך ${active} נהגים פעילים`;
   $('kHours').textContent = fmtHours(ms);
+  $('kAbsent').textContent = Math.max(active - todayCount, 0);
   $('kReg').textContent = reg;
-  $('kRegSub').textContent = `מתוך ${active} · ${active - reg} טרם נרשמו`;
+  $('kRegSub').textContent = `${active - reg} טרם נרשמו`;
 
-  $('nowTable').innerHTML = table(['נהג', 'משאית', 'שעת כניסה', 'משך משמרת', 'מיקום'],
-    on.map(p => `<tr><td>${nameCell(dname(p.driver_id))}</td><td>${p.truck_id ? `<span class="badge dim">משאית ${p.truck_id}</span>` : '—'}</td>
-      <td>${fmtClock(p.at)}</td><td><b>${fmtHours(Date.now() - new Date(p.at))}</b></td><td>${mapLink(p)}</td></tr>`),
+  $('eventsTable').innerHTML = table(['נהג', 'סוג', 'משאית', 'שעה', 'מיקום'],
+    today.slice().reverse().slice(0, 30).map(p => `<tr><td>${nameCell(dname(p.driver_id))}</td><td>${kindBadge(p.kind)}</td>
+      <td>${p.truck_id ? `<span class="badge dim">${p.truck_id}</span>` : '—'}</td><td>${fmtClock(p.at)}</td><td>${mapLink(p)}</td></tr>`),
+    'עדיין אין החתמות היום');
+  $('nowTable').innerHTML = table(['נהג', 'משאית', 'משך'],
+    on.map(p => `<tr><td>${nameCell(dname(p.driver_id))}</td><td>${p.truck_id ? `<span class="badge dim">${p.truck_id}</span>` : '—'}</td>
+      <td><b>${fmtHours(Date.now() - new Date(p.at))}</b><div class="sub" style="color:var(--muted);font-size:12px">מ-${fmtClock(p.at)}</div></td></tr>`),
     'אין כרגע נהגים במשמרת');
 }
 setInterval(() => { if (!$('now').classList.contains('hidden') && !$('app').classList.contains('hidden')) loadNow(); }, 60000);
@@ -378,7 +441,7 @@ $('csvSummary').onclick = () => {
     [['נהג', 'משמרות', 'שעות']].concat(Object.entries(sum).map(([d, [ms, n]]) => [dname(+d), n, (ms / 3600e3).toFixed(2)])));
 };
 
-// ---------- קישורים לתגים ----------
+// ---------- תגים ----------
 async function renderTags() {
   const { data } = await sb.from('trucks').select('*').order('id');
   const base = location.href.replace(/admin\.html.*$/, '');
