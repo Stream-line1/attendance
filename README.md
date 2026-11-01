@@ -4,9 +4,9 @@
 
 ## מבנה
 - `supabase/schema.sql` – מסד הנתונים והאבטחה
-- `public/index.html` – דף ההחתמה של הנהג (נפתח מהתג)
-- `public/admin.html` – מסך המנהל
-- `public/config.js` – פרטי החיבור ל-Supabase
+- `docs/index.html` – דף ההחתמה של הנהג (נפתח מהתג)
+- `docs/admin.html` – מסך המנהל
+- `docs/config.js` – פרטי החיבור ל-Supabase
 
 ## הקמה (כ-30 דקות)
 
@@ -19,11 +19,11 @@
    ```sql
    insert into admins (user_id) select id from auth.users where email = 'manager@example.com';
    ```
-6. **Project Settings → API**: מעתיקים את `Project URL` ואת `anon public key` לתוך `public/config.js`.
+6. **Project Settings → API**: מעתיקים את `Project URL` ואת `anon public key` לתוך `docs/config.js`.
 
 ### 2. אחסון האתר – Netlify
 1. נרשמים ב-https://app.netlify.com.
-2. **Add new site → Deploy manually** וגוררים את התיקייה `public`.
+2. **Add new site → Deploy manually** וגוררים את התיקייה `docs`.
 3. מקבלים כתובת כמו `https://my-attendance.netlify.app` (אפשר לשנות שם בהגדרות האתר).
 
 ### 3. הוספת נהגים
