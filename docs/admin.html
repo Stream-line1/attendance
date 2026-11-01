@@ -158,6 +158,18 @@
   .modal .err { color: var(--red); min-height: 1.2em; margin-top: 10px; font-size: 14px; }
   .modal-foot { display: flex; gap: 8px; margin-top: 8px; }
 
+  .modal select { width: 100%; padding: 12px 14px; font-size: 16px; }
+  .fix-info { background: #f6f7fb; border-radius: 14px; padding: 12px 14px; margin: 10px 0 4px; font-size: 15px; line-height: 1.7; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 2px 0; }
+  .modal label.check { display: flex; align-items: center; gap: 8px; color: var(--text); margin-top: 16px; }
+  .modal label.check input { width: auto; }
+  .seg { display: flex; gap: 8px; }
+  .seg label { flex: 1; margin: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; gap: 6px; align-items: center; justify-content: center; color: var(--text); cursor: pointer; }
+  .seg input { width: auto; }
+  tr.void td { opacity: .5; text-decoration: line-through; }
+  tr.void td:last-child, tr.void td:nth-last-child(2) { text-decoration: none; }
+  .reason { color: var(--muted); font-size: 12px; white-space: normal; max-width: 220px; }
+
   /* ---------- מובייל ---------- */
   .menu-btn { display: none; }
   @media (max-width: 900px) {
@@ -197,6 +209,7 @@
     <nav>
       <button data-tab="now" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>לוח בקרה</button>
       <button data-tab="drivers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8"/><path d="M22 21a7 7 0 0 0-4-6.3"/></svg>נהגים</button>
+      <button data-tab="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>רשומות נוכחות</button>
       <button data-tab="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>דוח שעות</button>
       <button data-tab="tags"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 0 1 0 7"/><path d="M9.5 6a10 10 0 0 1 0 12"/><path d="M13 3.5a14 14 0 0 1 0 17"/></svg>תגי NFC</button>
     </nav>
@@ -253,6 +266,28 @@
       <div class="box" id="driverList"></div>
     </section>
 
+    <!-- רשומות -->
+    <section id="records" class="hidden">
+      <div class="page-head">
+        <div><h1>רשומות נוכחות</h1><p>סינון, תיקון עם סיבה מחייבת ומסלול ביקורת</p></div>
+        <button class="btn red big" onclick="openManual()">+ רשומה ידנית</button>
+      </div>
+      <div class="filters">
+        <label>מתאריך</label><input type="date" id="recFrom">
+        <label>עד</label><input type="date" id="recTo">
+        <select id="recDriver"><option value="">כל הנהגים</option></select>
+        <select id="recStatus">
+          <option value="">כל הרשומות</option>
+          <option value="valid">תקינות</option>
+          <option value="manual">ידניות</option>
+          <option value="void">מבוטלות</option>
+        </select>
+        <button class="btn" id="recRun">סנן</button>
+      </div>
+      <div class="box"><div class="box-head"><h3>רשומות</h3><span class="badge dim" id="recCount"></span></div><div id="recTable"></div></div>
+      <div class="box"><div class="box-head"><h3>יומן ביקורת</h3><span class="badge dim">מי תיקן, מה ומתי</span></div><div id="auditTable"></div></div>
+    </section>
+
     <!-- דוח -->
     <section id="report" class="hidden">
       <div class="page-head"><div><h1>דוח שעות</h1><p>סיכום משמרות לפי תקופה, מוכן לשכר</p></div></div>
@@ -281,6 +316,35 @@
       <div class="box" id="tagList"></div>
     </section>
   </main>
+</div>
+
+<div class="modal-bg hidden" id="fixModal">
+  <div class="modal">
+    <div class="modal-head"><h3>תיקון רשומה</h3><button class="x" onclick="closeModal('fixModal')">✕</button></div>
+    <div id="fixInfo" class="fix-info"></div>
+    <p class="hint">הרשומה המקורית לא נמחקת. היא מסומנת כמבוטלת, והתיקון נשמר ביומן הביקורת.</p>
+    <label>סיבת הביטול (חובה)</label><input id="fixReason" placeholder="לדוגמה: סריקה בטעות, נהג שכח לצאת">
+    <label class="check"><input type="checkbox" id="fixReplace"> להוסיף במקומה רשומה מתוקנת</label>
+    <div id="fixReplaceBox" class="hidden">
+      <label>שעה נכונה</label><input type="datetime-local" id="fixAt">
+    </div>
+    <div class="err" id="fixErr"></div>
+    <div class="modal-foot"><button class="btn red" id="fixSave">ביטול הרשומה</button><button class="btn ghost" onclick="closeModal('fixModal')">סגירה</button></div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="manModal">
+  <div class="modal">
+    <div class="modal-head"><h3>רשומה ידנית</h3><button class="x" onclick="closeModal('manModal')">✕</button></div>
+    <label>נהג</label><select id="manDriver"></select>
+    <label>סוג</label>
+    <div class="seg"><label><input type="radio" name="manKind" value="in" checked> כניסה</label><label><input type="radio" name="manKind" value="out"> יציאה</label></div>
+    <label>תאריך ושעה</label><input type="datetime-local" id="manAt">
+    <label>משאית (לא חובה)</label><input type="number" id="manTruck" min="1" placeholder="מספר משאית">
+    <label>סיבה (חובה)</label><input id="manReason" placeholder="לדוגמה: הטלפון של הנהג לא עבד">
+    <div class="err" id="manErr"></div>
+    <div class="modal-foot"><button class="btn red" id="manSave">שמירה</button><button class="btn ghost" onclick="closeModal('manModal')">ביטול</button></div>
+  </div>
 </div>
 
 <div class="modal-bg hidden" id="drvModal">
@@ -339,17 +403,19 @@ $('logout').onclick = async () => { await sb.auth.signOut(); start(); };
 $('menuBtn').onclick = () => $('side').classList.toggle('open');
 document.querySelectorAll('aside nav [data-tab]').forEach(b => b.onclick = () => {
   document.querySelectorAll('aside nav [data-tab]').forEach(x => x.classList.toggle('active', x === b));
-  ['now', 'report', 'drivers', 'tags'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
+  ['now', 'records', 'report', 'drivers', 'tags'].forEach(id => $(id).classList.toggle('hidden', id !== b.dataset.tab));
   $('side').classList.remove('open');
-  ({ now: loadNow, report: runReport, drivers: renderDrivers, tags: renderTags })[b.dataset.tab]();
+  ({ now: loadNow, records: loadRecords, report: runReport, drivers: renderDrivers, tags: renderTags })[b.dataset.tab]();
 });
 
 // ---------- נהגים ----------
 async function loadDrivers() {
   const { data } = await sb.from('drivers').select('*').order('name');
   drivers = data || [];
-  $('repDriver').innerHTML = '<option value="">כל הנהגים</option>' +
-    drivers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+  const opts = drivers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+  $('repDriver').innerHTML = '<option value="">כל הנהגים</option>' + opts;
+  $('recDriver').innerHTML = '<option value="">כל הנהגים</option>' + opts;
+  $('manDriver').innerHTML = drivers.filter(d => d.active).map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
 }
 const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M3 12h3M18 12h3"/></svg>';
@@ -428,7 +494,8 @@ async function loadNow() {
   $('nowDate').textContent = new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const since = new Date(Date.now() - 16 * 3600e3).toISOString();
   const { data } = await sb.from('punches').select('*').gte('at', since).order('at');
-  const punches = data || [];
+  const voided = await voidedIds();
+  const punches = (data || []).filter(p => !voided.has(p.id));
   const last = {};
   punches.forEach(p => last[p.driver_id] = p);
   const on = Object.values(last).filter(p => p.kind === 'in').sort((a, b) => new Date(a.at) - new Date(b.at));
@@ -473,8 +540,10 @@ async function runReport() {
   const to = new Date($('to').value + 'T00:00'); to.setDate(to.getDate() + 1);
   let q = sb.from('punches').select('*').gte('at', from.toISOString()).lt('at', to.toISOString()).order('at');
   if ($('repDriver').value) q = q.eq('driver_id', $('repDriver').value);
-  const { data, error } = await q.limit(10000);
+  const { data: raw, error } = await q.limit(10000);
   if (error) return alert(error.message);
+  const voided = await voidedIds();
+  const data = raw.filter(p => !voided.has(p.id));
 
   // צימוד כניסה ליציאה
   const open = {}, shifts = [];
@@ -542,6 +611,106 @@ async function renderTags() {
 async function copyLink(btn, url) {
   try { await navigator.clipboard.writeText(url); btn.textContent = 'הועתק ✓'; btn.classList.add('copy-done'); } catch { prompt('העתק:', url); }
 }
+
+// ---------- רשומות ותיקונים ----------
+async function voidedIds() {
+  const { data } = await sb.from('punch_voids').select('punch_id');
+  return new Set((data || []).map(v => v.punch_id));
+}
+const closeModal = id => $(id).classList.add('hidden');
+['fixModal', 'manModal'].forEach(id => $(id).onclick = e => { if (e.target.id === id) closeModal(id); });
+const toLocalInput = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+$('recFrom').value = ymd(new Date(Date.now() - 6 * 864e5));
+$('recTo').value = ymd(new Date());
+let recRows = [], voidMap = {};
+
+async function loadRecords() {
+  const from = new Date($('recFrom').value + 'T00:00');
+  const to = new Date($('recTo').value + 'T00:00'); to.setDate(to.getDate() + 1);
+  let q = sb.from('punches').select('*').gte('at', from.toISOString()).lt('at', to.toISOString()).order('at', { ascending: false });
+  if ($('recDriver').value) q = q.eq('driver_id', $('recDriver').value);
+  const [{ data, error }, { data: voids }] = await Promise.all([q.limit(2000), sb.from('punch_voids').select('*')]);
+  if (error) return alert(error.message);
+  voidMap = Object.fromEntries((voids || []).map(v => [v.punch_id, v]));
+  const f = $('recStatus').value;
+  recRows = (data || []).filter(p => !f || (f === 'void' ? voidMap[p.id] : f === 'manual' ? p.manual && !voidMap[p.id] : !voidMap[p.id]));
+  $('recCount').textContent = `${recRows.length} רשומות`;
+  $('recTable').innerHTML = table(['נהג', 'סוג', 'משאית', 'זמן', 'מקור', 'מיקום', 'סטטוס', ''],
+    recRows.map(p => {
+      const v = voidMap[p.id];
+      const status = v ? `<span class="badge bad">בוטלה</span><div class="reason">${esc(v.reason)}</div>`
+        : p.manual ? `<span class="badge warn">ידנית</span><div class="reason">${esc(p.reason)}</div>` : '<span class="badge ok">תקינה</span>';
+      return `<tr class="${v ? 'void' : ''}"><td>${nameCell(dname(p.driver_id))}</td><td>${kindBadge(p.kind)}</td>
+        <td>${p.truck_id ? `<span class="badge dim">${p.truck_id}</span>` : '—'}</td><td>${fmtTime(p.at)}</td>
+        <td>${p.manual ? 'ידני' : 'NFC'}</td><td>${mapLink(p)}</td><td>${status}</td>
+        <td style="text-align:left">${v ? '' : `<button class="btn ghost small" onclick="openFix(${p.id})">תיקון</button>`}</td></tr>`;
+    }), 'אין רשומות בטווח שנבחר');
+  loadAudit();
+}
+$('recRun').onclick = loadRecords;
+
+async function loadAudit() {
+  const { data } = await sb.rpc('audit_log');
+  $('auditTable').innerHTML = table(['מתי', 'פעולה', 'נהג', 'רשומה', 'סיבה', 'על ידי'],
+    (data || []).slice(0, 100).map(a => `<tr><td>${fmtTime(a.at)}</td>
+      <td>${a.action === 'ביטול' ? '<span class="badge bad">ביטול</span>' : '<span class="badge warn">רשומה ידנית</span>'}</td>
+      <td>${esc(dname(a.driver_id))}</td><td>${a.kind === 'in' ? 'כניסה' : 'יציאה'} · ${fmtTime(a.punch_at)}</td>
+      <td class="reason">${esc(a.reason)}</td><td class="mono">${esc(a.by_email || '—')}</td></tr>`),
+    'עדיין לא בוצעו תיקונים');
+}
+
+let fixing = null;
+function openFix(id) {
+  fixing = recRows.find(p => p.id === id);
+  $('fixInfo').innerHTML = `<b>${esc(dname(fixing.driver_id))}</b><br>${fixing.kind === 'in' ? 'כניסה' : 'יציאה'} · ${fmtTime(fixing.at)}${fixing.truck_id ? ' · משאית ' + fixing.truck_id : ''}`;
+  $('fixReason').value = '';
+  $('fixReplace').checked = false;
+  $('fixReplaceBox').classList.add('hidden');
+  $('fixAt').value = toLocalInput(new Date(fixing.at));
+  $('fixSave').textContent = 'ביטול הרשומה';
+  $('fixErr').textContent = '';
+  $('fixModal').classList.remove('hidden');
+  $('fixReason').focus();
+}
+$('fixReplace').onchange = () => {
+  $('fixReplaceBox').classList.toggle('hidden', !$('fixReplace').checked);
+  $('fixSave').textContent = $('fixReplace').checked ? 'ביטול והוספת רשומה מתוקנת' : 'ביטול הרשומה';
+};
+$('fixSave').onclick = async () => {
+  const reason = $('fixReason').value.trim();
+  if (!reason) return $('fixErr').textContent = 'חובה לכתוב סיבה';
+  if ($('fixReplace').checked && !$('fixAt').value) return $('fixErr').textContent = 'חסרה שעה נכונה';
+  const { error } = await sb.from('punch_voids').insert({ punch_id: fixing.id, reason });
+  if (error) return $('fixErr').textContent = error.message;
+  if ($('fixReplace').checked) {
+    const { error: e2 } = await sb.from('punches').insert({ driver_id: fixing.driver_id, truck_id: fixing.truck_id, kind: fixing.kind,
+      at: new Date($('fixAt').value).toISOString(), manual: true, reason: 'תיקון: ' + reason });
+    if (e2) return $('fixErr').textContent = 'הרשומה בוטלה, אבל הוספת התיקון נכשלה: ' + e2.message;
+  }
+  closeModal('fixModal');
+  loadRecords();
+};
+
+function openManual() {
+  $('manAt').value = toLocalInput(new Date());
+  $('manTruck').value = '';
+  $('manReason').value = '';
+  $('manErr').textContent = '';
+  $('manModal').classList.remove('hidden');
+}
+$('manSave').onclick = async () => {
+  const reason = $('manReason').value.trim();
+  if (!$('manDriver').value) return $('manErr').textContent = 'יש לבחור נהג';
+  if (!$('manAt').value) return $('manErr').textContent = 'חסרים תאריך ושעה';
+  if (!reason) return $('manErr').textContent = 'חובה לכתוב סיבה';
+  const truck = parseInt($('manTruck').value) || null;
+  const { error } = await sb.from('punches').insert({ driver_id: +$('manDriver').value, truck_id: truck,
+    kind: document.querySelector('input[name=manKind]:checked').value, at: new Date($('manAt').value).toISOString(), manual: true, reason });
+  if (error) return $('manErr').textContent = error.message;
+  closeModal('manModal');
+  if (!$('records').classList.contains('hidden')) loadRecords();
+};
 
 start();
 </script>
