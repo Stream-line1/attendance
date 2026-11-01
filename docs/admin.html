@@ -64,7 +64,7 @@
     <section id="drivers" class="box hidden">
       <div class="row">
         <input id="dName" placeholder="שם">
-        <input id="dPhone" placeholder="טלפון">
+        <input id="dIdNum" placeholder="תעודת זהות">
         <input id="dPin" placeholder="קוד אישי (4 ספרות)">
         <button class="act" id="addDriver">הוסף נהג</button>
       </div>
@@ -118,9 +118,9 @@ async function loadDrivers() {
     drivers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
 }
 function renderDrivers() {
-  $('driverList').innerHTML = `<table><tr><th>שם</th><th>טלפון</th><th>קוד</th><th>טלפון רשום</th><th>פעיל</th><th></th></tr>` +
+  $('driverList').innerHTML = `<table><tr><th>שם</th><th>ת.ז</th><th>קוד</th><th>טלפון רשום</th><th>פעיל</th><th></th></tr>` +
     drivers.map(d => `<tr>
-      <td>${esc(d.name)}</td><td>${esc(d.phone)}</td><td>${esc(d.pin)}</td>
+      <td>${esc(d.name)}</td><td>${esc(d.id_number)}</td><td>${esc(d.pin)}</td>
       <td>${d.device_token ? '✅' : '—'}</td><td>${d.active ? '✅' : '❌'}</td>
       <td>
         <button class="act small" onclick="resetDevice(${d.id})">אפס טלפון</button>
@@ -128,10 +128,10 @@ function renderDrivers() {
       </td></tr>`).join('') + '</table>';
 }
 $('addDriver').onclick = async () => {
-  const phone = $('dPhone').value.replace(/\D/g, '');
-  const { error } = await sb.from('drivers').insert({ name: $('dName').value.trim(), phone, pin: $('dPin').value.trim() });
+  const id_number = $('dIdNum').value.replace(/\D/g, '').padStart(9, '0');
+  const { error } = await sb.from('drivers').insert({ name: $('dName').value.trim(), id_number, pin: $('dPin').value.trim() });
   if (error) return alert(error.message);
-  ['dName', 'dPhone', 'dPin'].forEach(id => $(id).value = '');
+  ['dName', 'dIdNum', 'dPin'].forEach(id => $(id).value = '');
   await loadDrivers(); renderDrivers();
 };
 async function resetDevice(id) {

@@ -5,7 +5,7 @@ create extension if not exists pgcrypto;
 create table drivers (
   id serial primary key,
   name text not null,
-  phone text not null unique,
+  id_number text not null unique,  -- ת.ז, 9 ספרות
   pin text not null,               -- קוד אישי לרישום טלפון בפעם הראשונה
   device_token uuid,               -- הטלפון הרשום של הנהג
   active boolean not null default true,
@@ -50,15 +50,15 @@ create policy admin_all on trucks  for all to authenticated using (is_admin()) w
 create policy admin_all on punches for all to authenticated using (is_admin()) with check (is_admin());
 create policy admin_self on admins for select to authenticated using (user_id = auth.uid());
 
--- רישום טלפון של נהג (פעם אחת)
-create or replace function register_device(p_phone text, p_pin text)
+-- רישום טלפון של נהג (פעם אחת), לפי ת.ז וקוד אישי
+create or replace function register_device(p_id text, p_pin text)
 returns json language plpgsql security definer set search_path = public as $$
 declare d drivers;
 begin
   select * into d from drivers
-   where phone = regexp_replace(p_phone, '\D', '', 'g') and pin = p_pin and active;
+   where id_number = lpad(regexp_replace(p_id, '\D', '', 'g'), 9, '0') and pin = p_pin and active;
   if not found then
-    raise exception 'מספר טלפון או קוד שגויים';
+    raise exception 'תעודת זהות או קוד שגויים';
   end if;
   update drivers set device_token = gen_random_uuid() where id = d.id returning * into d;
   return json_build_object('token', d.device_token, 'name', d.name);
