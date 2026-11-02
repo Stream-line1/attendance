@@ -50,6 +50,8 @@
   }
   input:focus { border-color: var(--gold); background: rgba(255,255,255,.09); box-shadow: 0 0 0 4px rgba(216,180,106,.15); }
   input::placeholder { color: #66729a; letter-spacing: 0; font-weight: 400; }
+  input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f5f7fb; caret-color: #f5f7fb; -webkit-box-shadow: 0 0 0 1000px #1a2a5c inset; transition: background-color 9999s; }
   button {
     width: 100%; margin-top: 22px; padding: 16px; border: 0; border-radius: 16px; cursor: pointer;
     font: 800 18px 'Heebo', sans-serif; color: #fff;
